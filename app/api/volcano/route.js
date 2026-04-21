@@ -1,17 +1,26 @@
+javascript
 import { sql } from '@vercel/postgres';
 
-// 1. THIS IS FOR THE APK (To Pull Data)
+// THE PULL (For the APK)
 export async function GET() {
-  const { rows } = await sql`SELECT * FROM "Upload" ORDER BY "createdAt" DESC LIMIT 10`;
-  return Response.json(rows);
+try {
+const { rows } = await sqlSELECT * FROM "Upload" ORDER BY "createdAt" DESC LIMIT 20;
+return Response.json(rows, { status: 200 });
+} catch (error) {
+return Response.json({ error: error.message }, { status: 500 });
+}
 }
 
-// 2. THIS IS FOR THE EXE (To Push Data)
+// THE PUSH (For the Windows EXE)
 export async function POST(request) {
-  const body = await request.json(); // The EXE sends { "userName": "...", "message": "..." }
-  
-  await sql`INSERT INTO "Upload" ("userName", "message") 
-            VALUES (${body.userName}, ${body.message});`;
+try {
+const body = await request.json();
+const { userName, message } = body;
 
-  return Response.json({ success: true });
+await sql`INSERT INTO "Upload" ("userName", "message") VALUES (${userName}, ${message});`;
+
+return Response.json({ success: "Data Pushed!" }, { status: 200 });
+} catch (error) {
+return Response.json({ error: error.message }, { status: 500 });
+}
 }
