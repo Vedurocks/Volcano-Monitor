@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volcano Eruption Monitor v5.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ===== CSS VARIABLES & RESET ===== */
+        :root {
+            --bg: #000000;
+            --bg2: #0a0a0a;
+            --card: #111111;
+            --border: #1e1e1e;
+            --border2: #2a2a2a;
+            --text: #ffffff;
+            --text2: #aaaaaa;
+            --orange: #f97316;
+            --blue: #3b82f6;
+            --red: #ef4444;
+            --green: #22c55e;
+            --yellow: #eab308;
+            --tab-active: #f97316;
+        }
+        .light {
+            --bg: #f5f5f5;
+            --bg2: #ebebeb;
+            --card: #ffffff;
+            --border: #e0e0e0;
+            --border2: #cccccc;
+            --text: #111111;
+            --text2: #555555;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 14px; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        /* ===== STATUS BAR ===== */
+        #statusBar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 36px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 100;
+            font-size: 11px;
+            transition: background 0.3s;
+        }
+        #statusBar.alert-dist { background: #7c1c00; }
+        #statusBar.alert-seis { background: #7c3500; }
+        #statusBar.alert-dual { background: #7c0000; animation: flashBar 0.6s infinite; }
+        @keyframes flashBar { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .status-left { display: flex; align-items: center; gap: 10px; }
+        .status-left span { font-weight: bold; color: var(--orange); font-size: 13px; }
+        .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block; }
+        .conn-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .status-right { display: flex; gap: 12px; font-size: 11px; color: var(--text2); }
+        .sys-badge {
+            padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold;
+            background: #222; color: var(--text2);
+        }
+        .sys-badge.active { background: #14532d; color: var(--green); }
+        .sys-badge.kill { background: #450a0a; color: var(--red); }
+
+        /* ===== LAYOUT ===== */
+        #app { padding-top: 36px; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ===== TABS ===== */
+        #tabBar {
+            display: flex;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+        /* ===== TAB PANELS ===== */
+        #tabContent { flex: 1; overflow: hidden; }
+        .tab-panel { display: none; height: 100%; overflow-y: auto; padding: 16px; }
+        .tab-panel.active { display: block; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text2);
+            margin-bottom: 12px;
+        }
+
+        /* ===== CONNECTION TAB ===== */
+        #connectBtn {
+            background: var(--orange);
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+        #connectBtn:hover { opacity: 0.85; }
+        #connectBtn.connected { background: #ef4444; color: #fff; }
+
+        .conn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        #connStatus { font-size: 11px; color: var(--text2); }
+
+        /* Sensor cards */
+        .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .sensor-card {
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            padding: 14px;
+        }
+        .sensor-card.alerting { border-color: var(--red); background: #1a0000; }
+        .sensor-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+        .sensor-value { font-size: 28px; font-weight: bold; letter-spacing: -0.02em; margin-bottom: 4px; }
+        .sensor-value.blue { color: var(--blue); }
+        .sensor-value.orange { color: var(--orange); }
+        .sensor-status { font-size: 11px; }
+        .sensor-status.ok { color: var(--green); }
+        .sensor-status.alert { color: var(--red); font-weight: bold; }
+
+        /* Progress bars */
+        .progress-section { margin-bottom: 12px; }
+        .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; }
+        .progress-label { width: 80px; color: var(--text2); }
+        .progress-bar { flex: 1; height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--blue); border-radius: 4px; transition: width 0.3s, background 0.3s; }
+        .progress-fill.seis { background: var(--orange); }
+        .progress-fill.danger { background: var(--red); }
+        .progress-pct { width: 36px; text-align: right; color: var(--text2); }
+
+        /* Graph area */
+        .graph-container { margin-bottom: 12px; }
+        .graph-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+        .graph-title { font-size: 10px; color: var(--text2); margin-bottom: 6px; display: flex; justify-content: space-between; }
+        canvas { display: block; }
+
+        /* Data log */
+        #dataLog {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            height: 160px;
+            overflow-y: auto;
+            padding: 8px;
+            font-size: 11px;
+            color: #00cc00;
+            font-family: 'Courier New', monospace;
+        }
+        .log-entry { margin-bottom: 2px; white-space: pre; }
+        .log-alert { color: var(--red); }
+        .log-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .log-head .card-title { margin: 0; }
+
+        /* ===== SETTINGS TAB ===== */
+        .settings-section { margin-bottom: 16px; }
+        .settings-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .settings-label { font-size: 11px; color: var(--text2); width: 120px; flex-shrink: 0; }
+        .inp {
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .inp:focus { border-color: var(--orange); }
+        .inp-num { width: 80px; }
+        .inp-key { width: 220px; }
+        .inp-select { cursor: pointer; }
+
+        .btn {
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-orange { background: var(--orange); color: #000; }
+        .btn-blue { background: var(--blue); color: #fff; }
+        .btn-red { background: var(--red); color: #fff; }
+        .btn-green { background: var(--green); color: #000; }
+        .btn-gray { background: #333; color: var(--text); }
+        .btn-sm { padding: 4px 10px; font-size: 10px; }
+
+        .cmd-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .theme-toggle { display: flex; gap: 8px; }
+        .theme-opt {
+            padding: 6px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            background: var(--bg2);
+            color: var(--text2);
+            transition: all 0.2s;
+        }
+        .theme-opt.active { border-color: var(--orange); color: var(--orange); }
+
+        .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+        input[type=checkbox] { accent-color: var(--orange); width: 14px; height: 14px; cursor: pointer; }
+
+        /* ===== SHELL TAB ===== */
+        #shellOutput {
+            background: #000;
+            border: 1px solid #1a1a1a;
+            border-radius: 6px;
+            height: calc(100vh - 220px);
+            min-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            color: #00cc00;
+            margin-bottom: 10px;
+        }
+        .shell-line { margin-bottom: 2px; white-space: pre-wrap; }
+        .shell-cmd { color: var(--orange); }
+        .shell-ok { color: var(--green); }
+        .shell-err { color: var(--red); }
+        .shell-info { color: #666; }
+
+        .shell-input-row { display: flex; gap: 8px; align-items: center; }
+        .shell-prompt { color: var(--orange); font-size: 14px; font-weight: bold; }
+        #shellInput {
+            flex: 1;
+            background: #000;
+            border: 1px solid #2a2a2a;
+            color: var(--green);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            outline: none;
+        }
+        #shellInput:focus { border-color: var(--orange); }
+
+        /* ===== AI TAB ===== */
+        #aiChat {
+            height: calc(100vh - 220px);
+            min-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .ai-msg {
+            max-width: 85%;
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .ai-msg.user {
+            background: var(--orange);
+            color: #000;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+        }
+        .ai-msg.assistant {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 2px;
+        }
+        .ai-msg.system {
+            background: #1a1a00;
+            border: 1px solid #333300;
+            color: var(--yellow);
+            font-size: 11px;
+            max-width: 100%;
+        }
+        .ai-cmd-exec { color: var(--green); font-weight: bold; }
+
+        .ai-input-row { display: flex; gap: 8px; }
+        #aiInput {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+            resize: none;
+        }
+        #aiInput:focus { border-color: var(--orange); }
+
+        .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .ai-title { font-size: 13px; font-weight: bold; color: var(--orange); }
+
+        .suggested-prompts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .suggested-btn {
+            padding: 4px 10px;
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            color: var(--text2);
+            border-radius: 20px;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .suggested-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+        .typing-dots { display: inline-flex; gap: 3px; align-items: center; }
+        .typing-dots span {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--text2); display: inline-block;
+            animation: blink 1.2s infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+        /* ===== MOBILE BANNER ===== */
+        #mobileBanner {
+            display: none;
+            background: #1a0000;
+            border: 1px solid var(--red);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 11px;
+            color: var(--red);
+            margin-bottom: 12px;
+        }
+
+        /* ===== GRAPH TOOLBAR ===== */
+        .graph-toolbar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+        .graph-toolbar span { font-size: 10px; color: var(--text2); margin-right: 4px; }
+        .zoom-btn {
+            padding: 3px 8px;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            color: var(--text2);
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .zoom-btn.active, .zoom-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .sensor-grid { grid-template-columns: 1fr; }
+            #mobileBanner { display: block; }
+            .settings-label { width: 100%; margin-bottom: 2px; }
+        }
+        @media (max-width: 800px) {
+            .sensor-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ===== ALERT OVERLAY ===== */
+        #alertOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 200;
+            animation: flashOverlay 0.6s infinite;
+        }
+        @keyframes flashOverlay {
+            0%,100% { background: transparent; }
+            50% { background: rgba(239,68,68,0.08); }
+        }
+
+        /* ===== EXPORT BUTTONS ===== */
+        .export-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ===== DIVIDER ===== */
+        .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+        hr.divider { margin: 10px 0; }
+
+        /* ===== API key toggle ===== */
+        .key-wrap { position: relative; display: inline-flex; align-items: center; }
+        .key-wrap .inp-key { padding-right: 32px; }
+        .key-eye {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0;
+        }
+        /* ===== INTRO / CONTACT TAB ===== */
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
+
+        .intro-wrap {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 56px 24px 80px;
+            font-family: 'DM Mono', 'Courier New', monospace;
+        }
+
+        /* Hero */
+        .intro-hero { margin-bottom: 64px; }
+
+        .intro-eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text2);
+            margin-bottom: 28px;
+            animation: introFade 0.6s ease both;
+        }
+        .intro-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--orange);
+            box-shadow: 0 0 8px var(--orange);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+        .intro-ver {
+            margin-left: auto;
+            padding: 2px 8px;
+            border: 1px solid var(--border2);
+            border-radius: 20px;
+            font-size: 9px;
+        }
+
+        .intro-title {
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-size: clamp(38px, 7vw, 76px);
+            font-weight: 400;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0 0.28em;
+        }
+        .intro-word {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(18px);
+            animation: wordUp 0.55s cubic-bezier(0.16,1,0.3,1) both;
+            animation-delay: var(--d, 0ms);
+        }
+        @keyframes wordUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .intro-accent { color: var(--orange); font-style: italic; }
+
+        .intro-sub {
+            font-size: 13px;
+            color: var(--text2);
+            line-height: 1.8;
+            margin-bottom: 36px;
+            animation: introFade 0.7s 0.3s ease both;
+        }
+        @keyframes introFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+        .intro-br { display: none; }
+        @media(min-width:560px){ .intro-br { display: inline; } }
+
+        .intro-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 24px;
+            background: var(--orange);
+            color: #000;
+            border: none;
+            border-radius: 3px;
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            animation: introFade 0.7s 0.45s ease both;
+        }
+        .intro-cta:hover { background: #fb923c; transform: translateX(3px); }
+        .intro-arrow { transition: transform 0.2s; }
+        .intro-cta:hover .intro-arrow { transform: translateX(4px); }
+
+        /* Rule */
+        .intro-rule {
+            height: 1px;
+            background: var(--border);
+            margin: 48px 0 40px;
+        }
+
+        /* Section label */
+        .intro-section-label {
+            font-size: 9px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--text2);
+            margin-bottom: 24px;
+        }
+
+        /* Features grid */
+        .feat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+        @media(max-width:620px){ .feat-grid { grid-template-columns: 1fr 1fr; } }
+        @media(max-width:400px){ .feat-grid { grid-template-columns: 1fr; } }
+
+        .feat-card {
+            background: var(--bg);
+            padding: 24px 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: introFade 0.5s calc(var(--fi, 0) * 60ms + 100ms) ease both;
+            transition: background 0.2s;
+        }
+        .feat-card:hover { background: var(--card); }
+
+        .feat-icon {
+            font-size: 16px;
+            color: var(--orange);
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+        .feat-name {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .feat-desc {
+            font-size: 11px;
+            color: var(--text2);
+            line-height: 1.7;
+        }
+
+        /* Stack pills */
+        .stack-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .stack-pill {
+            padding: 5px 12px;
+            border: 1px solid var(--border2);
+            border-radius: 2px;
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            color: var(--text2);
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .stack-pill:hover { border-color: var(--orange); color: var(--orange); }
+
+        /* Contact */
+        .contact-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+        @media(max-width:620px){ .contact-block { grid-template-columns: 1fr; gap: 32px; } }
+
+        .contact-name {
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 28px;
+            color: var(--text);
+            margin-bottom: 4px;
+            font-weight: 400;
+        }
+        .contact-role {
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-bottom: 18px;
+        }
+        .contact-bio {
+            font-size: 12px;
+            color: var(--text2);
+            line-height: 1.8;
+        }
+
+        .contact-links { display: flex; flex-direction: column; gap: 2px; }
+
+        .contact-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text2);
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            transition: color 0.2s, padding-left 0.2s;
+            cursor: pointer;
+        }
+        .contact-link:hover { color: var(--text); padding-left: 4px; }
+        .contact-link:first-child { border-top: 1px solid var(--border); }
+        .cl-icon { color: var(--orange); font-size: 12px; width: 16px; flex-shrink: 0; }
+        .cl-arr { margin-left: auto; opacity: 0; transition: opacity 0.2s; font-size: 12px; }
+        .contact-link:hover .cl-arr { opacity: 1; }
+
+        .contact-avail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--green);
+        }
+        .avail-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        /* Footer */
+        .intro-footer {
+            margin-top: 64px;
+            display: flex;
+            gap: 12px;
+            font-size: 10px;
+            color: var(--text2);
+            opacity: 0.5;
+            letter-spacing: 0.06em;
+            flex-wrap: wrap;
+        }
+        .intro-footer-sep { opacity: 0.4; }
+    </style>
+</head>
+<body>
+    <!-- Alert Overlay -->
+    <div id="alertOverlay"></div>
+
+    <!-- Status Bar -->
+    <div id="statusBar">
+        <div class="status-left">
+            <span>🌋 VOLCANO MONITOR v5.0</span>
+            <span class="conn-dot" id="connDot"></span>
+            <span id="connLabel" style="color:var(--text2);font-size:11px;">Disconnected</span>
+        </div>
+        <div class="status-right">
+            <span id="sysBadge" class="sys-badge">SYS: OFF</span>
+            <span id="killBadge" class="sys-badge">KILL: OFF</span>
+            <span id="alertMsg" style="color:var(--red);font-weight:bold;"></span>
+            <span id="clockEl" style="color:var(--text2);"></span>
+        </div>
+    </div>
+
+    <div id="app">
+        <!-- Tab Bar -->
+        <div id="tabBar">
+            <button class="tab-btn" onclick="switchTab('intro')">◈ About</button>
+            <button class="tab-btn active" onclick="switchTab('connection')">📡 Connection</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
+            <button class="tab-btn" onclick="switchTab('shell')">🖥 Shell</button>
+            <button class="tab-btn" onclick="switchTab('ai')">🤖 AI Control</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tabContent">
+
+            <!-- ===== TAB 1: CONNECTION ===== -->
+            <div class="tab-panel" id="panel-connection">
+                <div id="mobileBanner">⚠ Web Serial API requires desktop Chrome or Edge 89+. UI is responsive but serial won't work on mobile.</div>
+
+                <!-- Connect -->
+                <div class="card">
+                    <div class="conn-header">
+                        <button id="connectBtn" onclick="toggleConnection()">Connect to COM Port</button>
+                        <span id="connStatus">Not connected</span>
+                    </div>
+                </div>
+
+                <!-- Sensor Display + Graphs -->
+                <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;" class="sensor-graph-grid">
+                    <!-- Sensors -->
+                    <div>
+                        <div class="sensor-grid">
+                            <div class="sensor-card" id="ultraCard">
+                                <div class="sensor-label">Ultrasonic</div>
+                                <div class="sensor-value blue" id="ultraVal">—</div>
+                                <div class="sensor-status ok" id="ultraStatus">No Signal</div>
+                            </div>
+                            <div class="sensor-card" id="seisCard">
+                                <div class="sensor-label">Seismic</div>
+                                <div class="sensor-value orange" id="seisVal">—</div>
+                                <div class="sensor-status ok" id="seisStatus">No Signal</div>
+                            </div>
+                        </div>
+                        <!-- Progress Bars -->
+                        <div class="card">
+                            <div class="card-title">Threshold Levels</div>
+                            <div class="progress-row">
+                                <span class="progress-label" style="color:var(--blue)">Ultrasonic</span>
+                                <div class="progress-bar"><div class="progress-fill" id="ultraBar" style="width:0%"></div></div>
+                                <span class="progress-pct" id="ultraPct">0%</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="progress-label" style="color:var(--orange)">Seismic</span>
+                                <div class="progress-bar"><div class="progress-fill seis" id="seisBar" style="width:0%"></div></div>
+                                <span class="progress-pct" id="seisPct">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphs -->
+                    <div class="card" style="padding:12px;">
+                        <div class="graph-toolbar">
+                            <span>Zoom:</span>
+                            <button class="zoom-btn" onclick="setZoom(60)">60pt</button>
+                            <button class="zoom-btn active" onclick="setZoom(120)">120pt</button>
+                            <button class="zoom-btn" onclick="setZoom(240)">240pt</button>
+                            <button class="zoom-btn" onclick="setZoom('live')" style="margin-left:auto">Live</button>
+                        </div>
+                        <div class="graph-wrap">
+                            <div class="graph-title">
+                                <span style="color:var(--blue)">● Ultrasonic Distance (cm)</span>
+                                <span style="color:var(--text2)" id="ultraThreshLabel">Threshold: 100cm</span>
+                            </div>
+                            <canvas id="ultraChart" height="100"></canvas>
+                        </div>
+                        <div class="graph-wrap">
+                            <div class="graph-title">
+                                <span style="color:var(--orange)">● Seismic (raw)</span>
+                                <span style="color:var(--text2)" id="seisThreshLabel">Threshold: 50</span>
+                            </div>
+                            <canvas id="seisChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Log -->
+                <div class="card">
+                    <div class="log-head">
+                        <div class="card-title">Data Log</div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-gray btn-sm" onclick="clearLog()">Clear</button>
+                            <button class="btn btn-blue btn-sm" onclick="downloadCSV()">CSV</button>
+                            <button class="btn btn-blue btn-sm" onclick="downloadJSON()">JSON</button>
+                        </div>
+                    </div>
+                    <div id="dataLog"><span class="log-entry shell-info">[--:--:--] Waiting for serial data...</span></div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 2: SETTINGS ===== -->
+            <div class="tab-panel" id="panel-settings">
+
+                <!-- Appearance -->
+                <div class="card settings-section">
+                    <div class="card-title">Appearance</div>
+                    <div class="theme-toggle">
+                        <button class="theme-opt active" id="themeBtn-dark" onclick="setTheme('dark')">🌑 Dark</button>
+                        <button class="theme-opt" id="themeBtn-light" onclick="setTheme('light')">☀️ Light</button>
+                    </div>
+                </div>
+
+                <!-- Serial Connection -->
+                <div class="card settings-section">
+                    <div class="card-title">Serial Connection</div>
+                    <div class="settings-row">
+                        <button id="connectBtn2" class="btn btn-orange" onclick="toggleConnection()">Connect</button>
+                        <span id="connStatus2" style="font-size:11px;color:var(--text2);">Disconnected</span>
+                    </div>
+                </div>
+
+                <!-- Alarm Thresholds -->
+                <div class="card settings-section">
+                    <div class="card-title">Alarm Thresholds</div>
+                    <div class="settings-row">
+                        <span class="settings-label">Ultrasonic MIN</span>
+                        <input type="number" class="inp inp-num" id="ultraThreshInput" value="100" min="0" max="520">
+                        <span style="font-size:11px;color:var(--text2)">cm</span>
+                        <button class="btn btn-orange btn-sm" onclick="sendThreshUltra()">→ Arduino</button>
+                        <button class="btn btn-gray btn-sm" onclick="saveThreshLocal()">Save Local</button>
+                    </div>
+                    <div class="settings-row">
+                        <span class="settings-label">Seismic MIN</span>
+                        <input type="number" class="inp inp-num" id="seisThreshInput" value="50" min="0" max="1023">
+                        <span style="font-size:11px;color:var(--text2)">raw</span>
+                        <button class="btn btn-orange btn-sm" onclick="sendThreshSeis()">→ Arduino</button>
+                        <button class="btn btn-gray btn-sm" onclick="saveThreshLocal()">Save Local</button>
+                    </div>
+                </div>
+
+                <!-- Arduino Commands -->
+                <div class="card settings-section">
+                    <div class="card-title">Arduino Commands</div>
+                    <div class="cmd-grid">
+                        <button class="btn btn-green" onclick="sendCommand('on')">▶ ON</button>
+                        <button class="btn btn-gray" onclick="sendCommand('off')">■ OFF</button>
+                        <button class="btn btn-red" onclick="sendCommand('kill')">☠ KILL</button>
+                        <button class="btn btn-blue" onclick="sendCommand('reset')">↺ RESET</button>
+                        <button class="btn btn-gray" onclick="sendCommand('456')">⚡ TEST</button>
+                    </div>
+                </div>
+
+                <!-- Sarvam AI -->
+                <div class="card settings-section">
+                    <div class="card-title">Sarvam AI</div>
+                    <div class="settings-row">
+                        <span class="settings-label">API Key</span>
+                        <div class="key-wrap">
+                            <input type="password" class="inp inp-key" id="apiKeyInput" placeholder="sk_...">
+                            <button class="key-eye" onclick="toggleKeyVis()" id="keyEyeBtn">👁</button>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <span class="settings-label">Model</span>
+                        <select class="inp inp-select" id="modelSelect">
+                            <option value="sarvam-105b">sarvam-105b</option>
+                            <option value="sarvam-m">sarvam-m</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <button class="btn btn-orange" onclick="saveAISettings()">Save</button>
+                        <span id="aiSaveMsg" style="font-size:11px;color:var(--green);display:none;">✔ Saved</span>
+                    </div>
+                </div>
+
+                <!-- Data Logging -->
+                <div class="card settings-section">
+                    <div class="card-title">Data Logging</div>
+                    <label class="checkbox-row" style="margin-bottom:10px">
+                        <input type="checkbox" id="autoLogCheck" checked onchange="state.autoLog=this.checked;saveSettings();">
+                        Auto-log to CSV
+                    </label>
+                    <div style="font-size:11px;color:var(--text2);margin-bottom:10px" id="logStats">0 entries logged</div>
+                    <div class="export-row">
+                        <button class="btn btn-blue btn-sm" onclick="downloadCSV()">Download CSV</button>
+                        <button class="btn btn-blue btn-sm" onclick="downloadJSON()">Download JSON</button>
+                        <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear History</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 3: SHELL ===== -->
+            <div class="tab-panel" id="panel-shell">
+                <div class="card" style="margin-bottom:0">
+                    <div class="log-head">
+                        <div class="card-title">Serial Shell — ↑↓ history • on | off | kill | reset | min ult X | min sei X</div>
+                        <button class="btn btn-gray btn-sm" onclick="clearShell()">Clear</button>
+                    </div>
+                </div>
+                <div id="shellOutput"></div>
+                <div class="shell-input-row">
+                    <span class="shell-prompt">›</span>
+                    <input type="text" id="shellInput" placeholder="Type a command..." autocomplete="off" spellcheck="false"
+                        onkeydown="handleShellKey(event)">
+                    <button class="btn btn-orange" onclick="executeShellCmd()">Send</button>
+                </div>
+            </div>
+
+            <!-- ===== TAB 4: AI ===== -->
+            <div class="tab-panel" id="panel-ai">
+                <div class="ai-header">
+                    <span class="ai-title">🤖 Sarvam AI Control</span>
+                    <div style="display:flex;gap:6px">
+                        <button class="btn btn-gray btn-sm" onclick="newAISession()">New Session</button>
+                        <button class="btn btn-gray btn-sm" onclick="clearAIChat()">Clear</button>
+                    </div>
+                </div>
+
+                <div class="suggested-prompts">
+                    <button class="suggested-btn" onclick="fillAIInput('Check system status')">Check system status</button>
+                    <button class="suggested-btn" onclick="fillAIInput('Set safe thresholds')">Set safe thresholds</button>
+                    <button class="suggested-btn" onclick="fillAIInput('Activate the monitoring system')">Activate system</button>
+                    <button class="suggested-btn" onclick="fillAIInput('What are the current sensor readings?')">Current readings</button>
+                    <button class="suggested-btn" onclick="fillAIInput('Set ultrasonic to 150cm and seismic to 80')">Set thresholds</button>
+                </div>
+
+                <div id="aiChat"></div>
+
+                <div class="ai-input-row">
+                    <textarea id="aiInput" rows="2" placeholder="Ask the AI to control the monitor... (Enter to send, Shift+Enter for newline)"
+                        onkeydown="handleAIKey(event)"></textarea>
+                    <button class="btn btn-orange" onclick="sendAIMessage(document.getElementById('aiInput').value.trim())">Send</button>
+                </div>
+            </div>
+
+            <!-- ===== TAB 0: INTRO / CONTACT ===== -->
+            <div class="tab-panel" id="panel-intro">
+                <div class="intro-wrap">
+
+                    <!-- Hero -->
+                    <div class="intro-hero">
+                        <div class="intro-eyebrow">
+                            <span class="intro-dot"></span>
+                            <span>Volcano Eruption Monitor</span>
+                            <span class="intro-ver">v5.0</span>
+                        </div>
+                        <h1 class="intro-title">
+                            <span class="intro-word" style="--d:0ms">Real&#8209;time</span>
+                            <span class="intro-word" style="--d:80ms">Eruption</span>
+                            <span class="intro-word intro-accent" style="--d:160ms">Intelligence.</span>
+                        </h1>
+                        <p class="intro-sub">
+                            A dual-sensor monitoring platform for Arduino-based<br class="intro-br">
+                            volcanic activity detection — with AI command control.
+                        </p>
+                        <button class="intro-cta" onclick="switchTabByName('connection')">
+                            Open Monitor <span class="intro-arrow">→</span>
+                        </button>
+                    </div>
+
+                    <div class="intro-rule"></div>
+
+                    <!-- Features -->
+                    <div class="intro-section-label">Features</div>
+                    <div class="feat-grid">
+                        <div class="feat-card" style="--fi:0">
+                            <div class="feat-icon">◎</div>
+                            <div class="feat-name">Dual Sensor</div>
+                            <div class="feat-desc">Simultaneous ultrasonic distance and seismic ADC monitoring with independent alert thresholds.</div>
+                        </div>
+                        <div class="feat-card" style="--fi:1">
+                            <div class="feat-icon">⟁</div>
+                            <div class="feat-name">Live Graphs</div>
+                            <div class="feat-desc">120-point rolling charts update in real time via Web Serial API at 500 ms intervals.</div>
+                        </div>
+                        <div class="feat-card" style="--fi:2">
+                            <div class="feat-icon">⌖</div>
+                            <div class="feat-name">AI Control</div>
+                            <div class="feat-desc">Natural language commands via Sarvam AI. Describe actions in plain English — the AI executes them.</div>
+                        </div>
+                        <div class="feat-card" style="--fi:3">
+                            <div class="feat-icon">◻</div>
+                            <div class="feat-name">Serial Shell</div>
+                            <div class="feat-desc">Full terminal with command history, tab-completion, and syntax validation before sending.</div>
+                        </div>
+                        <div class="feat-card" style="--fi:4">
+                            <div class="feat-icon">↓</div>
+                            <div class="feat-name">Data Export</div>
+                            <div class="feat-desc">Auto-log every reading. Export as CSV or JSON with timestamps, sensor values, and alert flags.</div>
+                        </div>
+                        <div class="feat-card" style="--fi:5">
+                            <div class="feat-icon">◈</div>
+                            <div class="feat-name">Alarm System</div>
+                            <div class="feat-desc">Audio beeps and visual flash overlays on threshold breach — dual alert escalates to 1.4 kHz tone.</div>
+                        </div>
+                    </div>
+
+                    <div class="intro-rule"></div>
+
+                    <!-- Stack -->
+                    <div class="intro-section-label">Stack</div>
+                    <div class="stack-row">
+                        <div class="stack-pill">Web Serial API</div>
+                        <div class="stack-pill">Chart.js</div>
+                        <div class="stack-pill">Web Audio API</div>
+                        <div class="stack-pill">Sarvam AI</div>
+                        <div class="stack-pill">Vanilla JS</div>
+                        <div class="stack-pill">localStorage</div>
+                        <div class="stack-pill">Chrome / Edge 89+</div>
+                    </div>
+
+                    <div class="intro-rule"></div>
+
+                    <!-- Contact -->
+                    <div class="intro-section-label">Contact</div>
+                    <div class="contact-block">
+                        <div class="contact-left">
+                            <div class="contact-name">Vedansh Jain</div>
+                            <div class="contact-role">Creative Technologist &amp; Hardware Engineer</div>
+                            <p class="contact-bio">
+                                Building tools at the intersection of embedded systems, data visualization,
+                                and AI-assisted interfaces. This monitor was designed for researchers
+                                and field engineers who need reliable, fast, and scriptable volcano
+                                activity detection.
+                            </p>
+                        </div>
+                        <div class="contact-links">
+                            <a class="contact-link" href="mailto:vedansh@example.com">
+                                <span class="cl-icon">✉</span>
+                                <span>vedansh@example.com</span>
+                                <span class="cl-arr">↗</span>
+                            </a>
+                            <a class="contact-link" href="https://github.com/" target="_blank" rel="noopener">
+                                <span class="cl-icon">⌥</span>
+                                <span>github.com/vedansh</span>
+                                <span class="cl-arr">↗</span>
+                            </a>
+                            <a class="contact-link" href="https://linkedin.com/" target="_blank" rel="noopener">
+                                <span class="cl-icon">◈</span>
+                                <span>linkedin.com/in/vedansh</span>
+                                <span class="cl-arr">↗</span>
+                            </a>
+                            <div class="contact-avail">
+                                <span class="avail-dot"></span>
+                                Available for collaboration
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="intro-footer">
+                        <span>© 2026 Vedansh Jain</span>
+                        <span class="intro-footer-sep">·</span>
+                        <span>Volcano Eruption Monitor v5.0</span>
+                        <span class="intro-footer-sep">·</span>
+                        <span>MIT License</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    // ===================================================================
+    // STATE
+    // ===================================================================
+    const state = {
+        connected: false,
+        port: null,
+        reader: null,
+        writer: null,
+        readerRunning: false,
+
+        // Sensor data
+        distance: 0,
+        seismic: 0,
+        distAlert: false,
+        seisAlert: false,
+        dualAlert: false,
+
+        // System state
+        systemActive: false,
+        killMode: false,
+
+        // Thresholds
+        minUltrasonic: 100,
+        minSeismic: 50,
+
+        // Data history
+        distanceHistory: Array(240).fill(0),
+        seismicHistory: Array(240).fill(0),
+
+        // Logs
+        dataLog: [],
+        csvLog: [],
+
+        // AI
+        aiHistory: [],
+        apiKey: '',
+        aiModel: 'sarvam-105b',
+
+        // Settings
+        theme: 'dark',
+        autoLog: true,
+        logEnabled: true
+    };
+
+    let serialBuffer = '';
+    let alarmInterval = null;
+    let audioCtx = null;
+    let graphPoints = 120;
+    let graphLive = true;
+    let graphOffset = 0;
+
+    // Shell history
+    let shellHistory = [];
+    let shellHistoryIdx = -1;
+
+    // ===================================================================
+    // INIT
+    // ===================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSettings();
+        applyTheme();
+        initCharts();
+        updateClock();
+        setInterval(updateClock, 1000);
+        setInterval(updateLogStats, 3000);
+        initShell();
+        applyStateToUI();
+
+        // Set intro tab active by default
+        switchTabByName('intro');
+
+        // Mobile detection
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            document.getElementById('mobileBanner').style.display = 'block';
+        }
+        if (!navigator.serial) {
+            document.getElementById('mobileBanner').style.display = 'block';
+            document.getElementById('mobileBanner').textContent =
+                '⚠ Web Serial API not supported in this browser. Use Chrome or Edge 89+.';
+        }
+    });
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clockEl').textContent =
+            now.toTimeString().slice(0,8);
+    }
+
+    function timestamp() {
+        return new Date().toTimeString().slice(0,8);
+    }
+
+    // ===================================================================
+    // LOCAL STORAGE
+    // ===================================================================
+    function saveSettings() {
+        localStorage.setItem('volcanoSettings', JSON.stringify({
+            minUltrasonic: state.minUltrasonic,
+            minSeismic: state.minSeismic,
+            apiKey: state.apiKey,
+            aiModel: state.aiModel,
+            theme: state.theme,
+            autoLog: state.autoLog
+        }));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('volcanoSettings');
+        if (saved) {
+            try {
+                const s = JSON.parse(saved);
+                Object.assign(state, s);
+            } catch(e) {}
+        }
+        // Apply to inputs
+        document.getElementById('ultraThreshInput').value = state.minUltrasonic;
+        document.getElementById('seisThreshInput').value = state.minSeismic;
+        document.getElementById('apiKeyInput').value = state.apiKey;
+        document.getElementById('modelSelect').value = state.aiModel;
+        document.getElementById('autoLogCheck').checked = state.autoLog;
+    }
+
+    function saveThreshLocal() {
+        state.minUltrasonic = parseInt(document.getElementById('ultraThreshInput').value) || 100;
+        state.minSeismic = parseInt(document.getElementById('seisThreshInput').value) || 50;
+        saveSettings();
+        updateThresholdUI();
+        addLogEntry(`[${timestamp()}] ⚙ Thresholds saved locally (ultra=${state.minUltrasonic}, seis=${state.minSeismic})`);
+    }
+
+    function saveAISettings() {
+        state.apiKey = document.getElementById('apiKeyInput').value.trim();
+        state.aiModel = document.getElementById('modelSelect').value;
+        saveSettings();
+        const msg = document.getElementById('aiSaveMsg');
+        msg.style.display = 'inline';
+        setTimeout(() => msg.style.display = 'none', 2000);
+    }
+
+    // ===================================================================
+    // THEME
+    // ===================================================================
+    function setTheme(t) {
+        state.theme = t;
+        applyTheme();
+        saveSettings();
+    }
+
+    function applyTheme() {
+        document.body.classList.toggle('light', state.theme === 'light');
+        document.getElementById('themeBtn-dark').classList.toggle('active', state.theme === 'dark');
+        document.getElementById('themeBtn-light').classList.toggle('active', state.theme === 'light');
+    }
+
+    // ===================================================================
+    // TABS
+    // ===================================================================
+    function switchTab(name) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panel-' + name).classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
+    }
+
+    function switchTabByName(name) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panel-' + name).classList.add('active');
+        // Activate the matching tab button
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + name + "'")) {
+                b.classList.add('active');
+            }
+        });
+    }
+
+    // ===================================================================
+    // SERIAL CONNECTION
+    // ===================================================================
+    async function toggleConnection() {
+        if (state.connected) {
+            await disconnectSerial();
+        } else {
+            await connectSerial();
+        }
+    }
+
+    async function connectSerial() {
+        if (!navigator.serial) {
+            alert('Web Serial API not supported. Use Chrome or Edge 89+.');
+            return;
+        }
+        try {
+            state.port = await navigator.serial.requestPort();
+            await state.port.open({ baudRate: 9600 });
+
+            // Writer
+            const textEncoder = new TextEncoderStream();
+            textEncoder.readable.pipeTo(state.port.writable);
+            state.writer = textEncoder.writable.getWriter();
+
+            state.connected = true;
+            updateConnUI(true);
+            addLogEntry(`[${timestamp()}] ✔ Connected to serial port`);
+            shellLog(`[${timestamp()}] ✔ Serial connection established`);
+
+            // Start reading
+            readSerialData();
+
+        } catch(err) {
+            if (err.name !== 'NotFoundError') {
+                addLogEntry(`[${timestamp()}] ✖ Connection error: ${err.message}`, true);
+            }
+        }
+    }
+
+    async function disconnectSerial() {
+        try {
+            state.connected = false;
+            state.readerRunning = false;
+            if (state.reader) { try { await state.reader.cancel(); } catch(e){} state.reader = null; }
+            if (state.writer) { try { state.writer.releaseLock(); } catch(e){} state.writer = null; }
+            if (state.port) { try { await state.port.close(); } catch(e){} state.port = null; }
+        } catch(e){}
+        updateConnUI(false);
+        addLogEntry(`[${timestamp()}] Disconnected`);
+        shellLog(`[${timestamp()}] Disconnected`);
+    }
+
+    function updateConnUI(connected) {
+        const dot = document.getElementById('connDot');
+        const label = document.getElementById('connLabel');
+        const btn = document.getElementById('connectBtn');
+        const btn2 = document.getElementById('connectBtn2');
+        const s1 = document.getElementById('connStatus');
+        const s2 = document.getElementById('connStatus2');
+
+        dot.classList.toggle('connected', connected);
+        label.textContent = connected ? 'Connected' : 'Disconnected';
+        label.style.color = connected ? 'var(--green)' : 'var(--text2)';
+        btn.textContent = connected ? 'Disconnect' : 'Connect to COM Port';
+        btn.classList.toggle('connected', connected);
+        btn2.textContent = connected ? 'Disconnect' : 'Connect';
+        s1.textContent = connected ? '● Connected' : 'Not connected';
+        s2.textContent = connected ? '● Connected' : '● Disconnected';
+        s1.style.color = connected ? 'var(--green)' : 'var(--text2)';
+        s2.style.color = connected ? 'var(--green)' : 'var(--text2)';
+    }
+
+    // ===================================================================
+    // SERIAL READING
+    // ===================================================================
+    async function readSerialData() {
+        state.readerRunning = true;
+        try {
+            const textDecoder = new TextDecoderStream();
+            state.port.readable.pipeTo(textDecoder.writable);
+            const reader = textDecoder.readable.getReader();
+            state.reader = reader;
+
+            while (state.connected && state.readerRunning) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                serialBuffer += value;
+                const lines = serialBuffer.split('\n');
+                serialBuffer = lines.pop();
+                for (const line of lines) {
+                    if (line.trim()) parseSerialLine(line.trim());
+                }
+            }
+        } catch(err) {
+            if (state.connected) {
+                addLogEntry(`[${timestamp()}] ✖ Read error: ${err.message}`, true);
+                await disconnectSerial();
+            }
+        }
+    }
+
+    function parseSerialLine(line) {
+        const parts = line.split(',');
+        if (parts.length !== 9) {
+            addLogEntry(`[${timestamp()}] ← (unknown) ${line}`);
+            return;
+        }
+        try {
+            state.distance   = parseFloat(parts[0]);
+            state.seismic    = parseInt(parts[1]);
+            state.distAlert  = parts[2] === '1';
+            state.seisAlert  = parts[3] === '1';
+            state.dualAlert  = parts[4] === '1';
+            state.killMode   = parts[5] === '1';
+            state.systemActive = parts[6] === '1';
+            const minUltra = parseFloat(parts[7]);
+            const minSeis  = parseInt(parts[8]);
+
+            if (minUltra !== state.minUltrasonic || minSeis !== state.minSeismic) {
+                state.minUltrasonic = minUltra;
+                state.minSeismic    = minSeis;
+                updateThresholdUI();
+            }
+
+            updateGraphs();
+            updateSensorDisplay();
+            if (state.autoLog) logData();
+
+            const entry = `[${timestamp()}] ← dist=${state.distance.toFixed(1)}cm seis=${state.seismic} ` +
+                          `da=${parts[2]} sa=${parts[3]} dual=${parts[4]} kill=${parts[5]} sys=${parts[6]}`;
+            const isAlert = state.distAlert || state.seisAlert || state.dualAlert;
+            addLogEntry(entry, isAlert);
+
+            if (isAlert) triggerAlarm(); else stopAlarm();
+            updateSystemUI();
+
+        } catch(e) {
+            addLogEntry(`[${timestamp()}] ← (parse error) ${line}`, true);
+        }
+    }
+
+    // ===================================================================
+    // SEND COMMANDS
+    // ===================================================================
+    async function sendCommand(command) {
+        if (!state.connected || !state.writer) {
+            const msg = `[${timestamp()}] ✖ Not connected`;
+            addLogEntry(msg, true);
+            shellLog(msg, 'err');
+            return false;
+        }
+        try {
+            await state.writer.write(command + '\n');
+            applyCommandState(command);
+            const entry = `[${timestamp()}] → ${command}`;
+            addLogEntry(entry);
+            shellLog(`[${timestamp()}] › ${command}`, 'cmd');
+            shellLog(`[${timestamp()}] ✔ ${command} → sys=${state.systemActive?1:0} (${state.systemActive?'ACTIVE':'INACTIVE'}) kill=${state.killMode?1:0}`, 'ok');
+            return true;
+        } catch(err) {
+            const msg = `[${timestamp()}] ✖ Send error: ${err.message}`;
+            addLogEntry(msg, true);
+            shellLog(msg, 'err');
+            return false;
+        }
+    }
+
+    function applyCommandState(cmd) {
+        const c = cmd.trim().toLowerCase();
+        if (c === 'on')    { state.systemActive = true;  state.killMode = false; }
+        else if (c === 'off')   { state.systemActive = false; }
+        else if (c === 'kill')  { state.killMode = !state.killMode; }
+        else if (c === 'reset') { state.systemActive = true; state.killMode = false; }
+        else if (c.startsWith('min ult ')) { state.minUltrasonic = parseFloat(c.split(' ')[2]) || state.minUltrasonic; updateThresholdUI(); }
+        else if (c.startsWith('min sei ')) { state.minSeismic    = parseFloat(c.split(' ')[2]) || state.minSeismic;    updateThresholdUI(); }
+        updateSystemUI();
+    }
+
+    async function sendThreshUltra() {
+        const v = parseInt(document.getElementById('ultraThreshInput').value) || 100;
+        state.minUltrasonic = v;
+        updateThresholdUI();
+        saveSettings();
+        await sendCommand(`min ult ${v}`);
+    }
+
+    async function sendThreshSeis() {
+        const v = parseInt(document.getElementById('seisThreshInput').value) || 50;
+        state.minSeismic = v;
+        updateThresholdUI();
+        saveSettings();
+        await sendCommand(`min sei ${v}`);
+    }
+
+    // ===================================================================
+    // UI UPDATES
+    // ===================================================================
+    function updateSensorDisplay() {
+        document.getElementById('ultraVal').textContent = state.distance.toFixed(1) + ' cm';
+        document.getElementById('seisVal').textContent  = state.seismic + ' raw';
+
+        const uCard = document.getElementById('ultraCard');
+        const sCard = document.getElementById('seisCard');
+        const uStat = document.getElementById('ultraStatus');
+        const sStat = document.getElementById('seisStatus');
+
+        uCard.classList.toggle('alerting', state.distAlert);
+        sCard.classList.toggle('alerting', state.seisAlert);
+
+        uStat.textContent = state.distAlert ? '⚠ ALERT' : '✔ OK';
+        uStat.className = 'sensor-status ' + (state.distAlert ? 'alert' : 'ok');
+        sStat.textContent = state.seisAlert ? '⚠ ALERT' : '✔ OK';
+        sStat.className = 'sensor-status ' + (state.seisAlert ? 'alert' : 'ok');
+
+        // Progress bars
+        const ultraPct = Math.min(100, Math.round((state.distance / state.minUltrasonic) * 100));
+        const seisPct  = Math.min(100, Math.round((state.seismic  / state.minSeismic)    * 100));
+
+        const uBar = document.getElementById('ultraBar');
+        const sBar = document.getElementById('seisBar');
+        uBar.style.width = ultraPct + '%';
+        sBar.style.width = seisPct  + '%';
+        uBar.classList.toggle('danger', state.distAlert);
+        sBar.classList.toggle('danger', state.seisAlert);
+        document.getElementById('ultraPct').textContent = ultraPct + '%';
+        document.getElementById('seisPct').textContent  = seisPct  + '%';
+    }
+
+    function updateSystemUI() {
+        const sysBadge  = document.getElementById('sysBadge');
+        const killBadge = document.getElementById('killBadge');
+        sysBadge.textContent  = 'SYS: ' + (state.systemActive ? 'ON' : 'OFF');
+        sysBadge.className    = 'sys-badge' + (state.systemActive ? ' active' : '');
+        killBadge.textContent = 'KILL: ' + (state.killMode ? 'ON' : 'OFF');
+        killBadge.className   = 'sys-badge' + (state.killMode ? ' kill' : '');
+
+        const alertEl  = document.getElementById('alertMsg');
+        const statusBar = document.getElementById('statusBar');
+        const overlay   = document.getElementById('alertOverlay');
+
+        if (state.dualAlert) {
+            alertEl.textContent = '⚠ DUAL ALERT';
+            statusBar.className = 'alert-dual';
+            overlay.style.display = 'block';
+        } else if (state.distAlert) {
+            alertEl.textContent = '⚠ DIST ALERT';
+            statusBar.className = 'alert-dist';
+            overlay.style.display = 'none';
+        } else if (state.seisAlert) {
+            alertEl.textContent = '⚠ SEIS ALERT';
+            statusBar.className = 'alert-seis';
+            overlay.style.display = 'none';
+        } else {
+            alertEl.textContent = '';
+            statusBar.className = '';
+            overlay.style.display = 'none';
+        }
+    }
+
+    function updateThresholdUI() {
+        document.getElementById('ultraThreshInput').value = state.minUltrasonic;
+        document.getElementById('seisThreshInput').value  = state.minSeismic;
+        document.getElementById('ultraThreshLabel').textContent = `Threshold: ${state.minUltrasonic}cm`;
+        document.getElementById('seisThreshLabel').textContent  = `Threshold: ${state.minSeismic}`;
+
+        // Update chart threshold lines
+        if (ultraChart) {
+            ultraChart.data.datasets[1].data = Array(graphPoints).fill(state.minUltrasonic);
+            ultraChart.update('none');
+        }
+        if (seisChart) {
+            seisChart.data.datasets[1].data = Array(graphPoints).fill(state.minSeismic);
+            seisChart.update('none');
+        }
+    }
+
+    function applyStateToUI() {
+        updateConnUI(false);
+        updateThresholdUI();
+        updateSystemUI();
+    }
+
+    function updateLogStats() {
+        document.getElementById('logStats').textContent = `${state.csvLog.length} entries logged`;
+    }
+
+    // ===================================================================
+    // CHARTS
+    // ===================================================================
+    let ultraChart, seisChart;
+
+    function initCharts() {
+        Chart.defaults.color = '#666';
+        Chart.defaults.borderColor = '#1e1e1e';
+
+        const commonOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { display: false }, tooltip: { enabled: true } },
+            scales: {
+                x: { display: false },
+                y: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: '#1a1a1a' } }
+            }
+        };
+
+        ultraChart = new Chart(document.getElementById('ultraChart'), {
+            type: 'line',
+            data: {
+                labels: Array(graphPoints).fill(''),
+                datasets: [{
+                    label: 'Distance (cm)',
+                    data: Array(graphPoints).fill(0),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Threshold',
+                    data: Array(graphPoints).fill(state.minUltrasonic),
+                    borderColor: '#ef4444',
+                    borderDash: [4, 4],
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0
+                }]
+            },
+            options: { ...commonOpts, scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, min: 0, max: 520 } } }
+        });
+
+        seisChart = new Chart(document.getElementById('seisChart'), {
+            type: 'line',
+            data: {
+                labels: Array(graphPoints).fill(''),
+                datasets: [{
+                    label: 'Seismic (raw)',
+                    data: Array(graphPoints).fill(0),
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249,115,22,0.08)',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Threshold',
+                    data: Array(graphPoints).fill(state.minSeismic),
+                    borderColor: '#ef4444',
+                    borderDash: [4, 4],
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0
+                }]
+            },
+            options: { ...commonOpts, scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, min: 0, max: 1023 } } }
+        });
+    }
+
+    function updateGraphs() {
+        // Push to history buffers
+        state.distanceHistory.push(state.distance);
+        state.seismicHistory.push(state.seismic);
+        if (state.distanceHistory.length > 1000) state.distanceHistory.shift();
+        if (state.seismicHistory.length > 1000) state.seismicHistory.shift();
+
+        if (!graphLive) return; // paused
+
+        const uSlice = state.distanceHistory.slice(-graphPoints);
+        const sSlice = state.seismicHistory.slice(-graphPoints);
+
+        ultraChart.data.labels = Array(uSlice.length).fill('');
+        ultraChart.data.datasets[0].data = uSlice;
+        ultraChart.data.datasets[1].data = Array(uSlice.length).fill(state.minUltrasonic);
+        ultraChart.update('none');
+
+        seisChart.data.labels = Array(sSlice.length).fill('');
+        seisChart.data.datasets[0].data = sSlice;
+        seisChart.data.datasets[1].data = Array(sSlice.length).fill(state.minSeismic);
+        seisChart.update('none');
+    }
+
+    function setZoom(pts) {
+        document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if (pts === 'live') {
+            graphLive = true;
+            graphPoints = 120;
+        } else {
+            graphLive = true;
+            graphPoints = pts;
+        }
+        updateGraphs();
+    }
+
+    // ===================================================================
+    // DATA LOG
+    // ===================================================================
+    const MAX_LOG = 500;
+
+    function addLogEntry(text, isAlert = false) {
+        const log = document.getElementById('dataLog');
+        const el = document.createElement('div');
+        el.className = 'log-entry' + (isAlert ? ' log-alert' : '');
+        el.textContent = text;
+        log.appendChild(el);
+
+        // Trim
+        while (log.children.length > MAX_LOG) log.removeChild(log.firstChild);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function clearLog() {
+        document.getElementById('dataLog').innerHTML = '';
+    }
+
+    function logData() {
+        state.csvLog.push({
+            timestamp: new Date().toISOString(),
+            distance: state.distance.toFixed(2),
+            seismic: state.seismic,
+            distAlert: state.distAlert ? 1 : 0,
+            seisAlert: state.seisAlert ? 1 : 0,
+            dualAlert: state.dualAlert ? 1 : 0,
+            kill: state.killMode ? 1 : 0,
+            systemOn: state.systemActive ? 1 : 0,
+            minUltra: state.minUltrasonic,
+            minSeis: state.minSeismic
+        });
+        if (state.csvLog.length > 10000) state.csvLog.shift();
+    }
+
+    function downloadCSV() {
+        if (!state.csvLog.length) { alert('No data to export'); return; }
+        const headers = 'timestamp,dist_cm,seismic,dist_alert,seis_alert,dual_alert,kill,sys_on,min_ultra,min_seis\n';
+        const rows = state.csvLog.map(e =>
+            `${e.timestamp},${e.distance},${e.seismic},${e.distAlert},${e.seisAlert},${e.dualAlert},${e.kill},${e.systemOn},${e.minUltra},${e.minSeis}`
+        ).join('\n');
+        const blob = new Blob([headers + rows], { type: 'text/csv' });
+        triggerDownload(blob, `volcano_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+
+    function downloadJSON() {
+        if (!state.csvLog.length) { alert('No data to export'); return; }
+        const blob = new Blob([JSON.stringify(state.csvLog, null, 2)], { type: 'application/json' });
+        triggerDownload(blob, `volcano_${new Date().toISOString().split('T')[0]}.json`);
+    }
+
+    function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function clearHistory() {
+        if (!confirm('Clear all logged data?')) return;
+        state.csvLog = [];
+        updateLogStats();
+        addLogEntry(`[${timestamp()}] ⚙ Data log cleared`);
+    }
+
+    // ===================================================================
+    // ALARM
+    // ===================================================================
+    function triggerAlarm() {
+        if (alarmInterval) return;
+        alarmInterval = setInterval(playBeep, 700);
+    }
+
+    function stopAlarm() {
+        if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+    }
+
+    function playBeep() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = state.dualAlert ? 1400 : 1000;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.25);
+        } catch(e){}
+    }
+
+    // ===================================================================
+    // SHELL
+    // ===================================================================
+    function initShell() {
+        const out = document.getElementById('shellOutput');
+        const t = timestamp();
+        shellLog(`[${t}] Volcano Eruption Monitor Shell v5.0`, 'info');
+        shellLog(`[${t}] Commands: on | off | kill | reset | 456`, 'info');
+        shellLog(`[${t}] Thresholds: min ult <cm> | min sei <raw>`, 'info');
+        shellLog(`[${t}] Type 'help' for all commands`, 'info');
+    }
+
+    function shellLog(text, type = '') {
+        const out = document.getElementById('shellOutput');
+        const el = document.createElement('div');
+        el.className = 'shell-line ' + (type === 'cmd' ? 'shell-cmd' : type === 'ok' ? 'shell-ok' : type === 'err' ? 'shell-err' : 'shell-info');
+        el.textContent = text;
+        out.appendChild(el);
+        while (out.children.length > 500) out.removeChild(out.firstChild);
+        out.scrollTop = out.scrollHeight;
+    }
+
+    function clearShell() {
+        document.getElementById('shellOutput').innerHTML = '';
+        initShell();
+    }
+
+    function handleShellKey(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            executeShellCmd();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (shellHistoryIdx < shellHistory.length - 1) {
+                shellHistoryIdx++;
+                document.getElementById('shellInput').value = shellHistory[shellHistory.length - 1 - shellHistoryIdx];
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (shellHistoryIdx > 0) {
+                shellHistoryIdx--;
+                document.getElementById('shellInput').value = shellHistory[shellHistory.length - 1 - shellHistoryIdx];
+            } else {
+                shellHistoryIdx = -1;
+                document.getElementById('shellInput').value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            tabCompleteShell();
+        }
+    }
+
+    const SHELL_CMDS = ['on', 'off', 'kill', 'reset', '456', 'help', 'clear', 'status', 'min ult ', 'min sei '];
+
+    function tabCompleteShell() {
+        const inp = document.getElementById('shellInput');
+        const val = inp.value;
+        const match = SHELL_CMDS.find(c => c.startsWith(val));
+        if (match) inp.value = match;
+    }
+
+    async function executeShellCmd() {
+        const inp = document.getElementById('shellInput');
+        const cmd = inp.value.trim();
+        if (!cmd) return;
+
+        shellHistoryIdx = -1;
+        shellHistory.push(cmd);
+        if (shellHistory.length > 100) shellHistory.shift();
+        inp.value = '';
+
+        shellLog(`[${timestamp()}] › ${cmd}`, 'cmd');
+
+        // Built-in shell commands
+        const c = cmd.toLowerCase();
+        if (c === 'help') {
+            shellLog('Commands: on | off | kill | reset | 456 | min ult <n> | min sei <n> | status | clear', 'info');
+            return;
+        }
+        if (c === 'clear') { clearShell(); return; }
+        if (c === 'status') {
+            shellLog(`Connected: ${state.connected} | Sys: ${state.systemActive} | Kill: ${state.killMode}`, 'info');
+            shellLog(`Dist: ${state.distance.toFixed(1)}cm | Seis: ${state.seismic} | Ultra thresh: ${state.minUltrasonic} | Seis thresh: ${state.minSeismic}`, 'info');
+            return;
+        }
+
+        // Validate
+        const validCmds = ['on','off','kill','reset','456'];
+        const isThresh = /^min (ult|sei) \d+(\.\d+)?$/.test(c);
+        if (!validCmds.includes(c) && !isThresh) {
+            shellLog(`[${timestamp()}] ✖ Unknown command: ${cmd}`, 'err');
+            return;
+        }
+
+        await sendCommand(cmd);
+    }
+
+    // ===================================================================
+    // AI INTEGRATION (Sarvam)
+    // ===================================================================
+    function fillAIInput(text) {
+        document.getElementById('aiInput').value = text;
+        document.getElementById('aiInput').focus();
+    }
+
+    function handleAIKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const txt = document.getElementById('aiInput').value.trim();
+            if (txt) sendAIMessage(txt);
+        }
+    }
+
+    function newAISession() {
+        state.aiHistory = [];
+        clearAIChat();
+        addAISystemMsg('New session started.');
+    }
+
+    function clearAIChat() {
+        document.getElementById('aiChat').innerHTML = '';
+    }
+
+    function addAISystemMsg(text) {
+        const chat = document.getElementById('aiChat');
+        const el = document.createElement('div');
+        el.className = 'ai-msg system';
+        el.textContent = text;
+        chat.appendChild(el);
+        chat.scrollTop = chat.scrollHeight;
+        return el;
+    }
+
+    function addUserMsg(text) {
+        const chat = document.getElementById('aiChat');
+        const el = document.createElement('div');
+        el.className = 'ai-msg user';
+        el.textContent = text;
+        chat.appendChild(el);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function createAIReplyEl() {
+        const chat = document.getElementById('aiChat');
+        const el = document.createElement('div');
+        el.className = 'ai-msg assistant';
+        el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        chat.appendChild(el);
+        chat.scrollTop = chat.scrollHeight;
+        return el;
+    }
+
+    function updateAIReplyEl(el, text) {
+        // Highlight [CMD:...] spans
+        el.innerHTML = text.replace(/\[CMD:([^\]]+)\]/g,
+            '<span style="color:var(--orange);font-weight:bold;">[CMD:$1]</span>');
+        document.getElementById('aiChat').scrollTop = 999999;
+    }
+
+    async function sendAIMessage(userMsg) {
+        if (!userMsg) return;
+
+        // Check API key (prompt if missing)
+        let apiKey = state.apiKey || document.getElementById('apiKeyInput').value.trim();
+        if (!apiKey) {
+            addAISystemMsg('⚠ Please set your Sarvam API key in Settings → Sarvam AI.');
+            return;
+        }
+        state.apiKey = apiKey;
+
+        document.getElementById('aiInput').value = '';
+        addUserMsg(userMsg);
+
+        const systemPrompt = `You are the AI controller for Volcano Eruption Monitor v5.0.
+Connected to HC-SR04 ultrasonic + seismic sensor via Arduino.
+
+Current state:
+- Ultrasonic threshold: ${state.minUltrasonic} cm
+- Seismic threshold: ${state.minSeismic} raw
+- System active: ${state.systemActive}
+- Kill mode: ${state.killMode}
+- Connected: ${state.connected}
+- Latest readings: dist=${state.distance.toFixed(1)}cm, seis=${state.seismic}
+- Distance alert: ${state.distAlert}, Seismic alert: ${state.seisAlert}, Dual alert: ${state.dualAlert}
+
+Commands you can embed in your reply to execute:
+[CMD:on] - Activate system
+[CMD:off] - Deactivate system
+[CMD:kill] - Toggle kill mode
+[CMD:reset] - Reset to safe state
+[CMD:min ult X] - Set ultrasonic threshold to X cm
+[CMD:min sei X] - Set seismic threshold to X raw
+
+Embed commands naturally in your response. Be concise and technical.`;
+
+        const replyEl = createAIReplyEl();
+
+        try {
+            const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'API-Subscription-Key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: state.aiModel,
+                    max_tokens: 1000,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        ...state.aiHistory,
+                        { role: 'user', content: userMsg }
+                    ],
+                    temperature: 0.8,
+                    stream: true
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                updateAIReplyEl(replyEl, `⚠ API Error ${response.status}: ${errText.slice(0,200)}`);
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let aiReply = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const data = line.slice(6).trim();
+                    if (data === '[DONE]') break;
+                    try {
+                        const json = JSON.parse(data);
+                        const token = json.choices?.[0]?.delta?.content || '';
+                        if (token) { aiReply += token; updateAIReplyEl(replyEl, aiReply); }
+                    } catch(e) {}
+                }
+            }
+
+            // Execute embedded commands
+            const cmds = aiReply.match(/\[CMD:([^\]]+)\]/g);
+            if (cmds && state.connected) {
+                for (const c of cmds) {
+                    const cmd = c.match(/\[CMD:([^\]]+)\]/)[1].trim();
+                    const ok = await sendCommand(cmd);
+                    aiReply += `\n⚡ Executed: ${cmd}${ok ? '' : ' (send failed)'}`;
+                    updateAIReplyEl(replyEl, aiReply);
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            } else if (cmds && !state.connected) {
+                aiReply += '\n⚠ Commands not sent – not connected to Arduino.';
+                updateAIReplyEl(replyEl, aiReply);
+            }
+
+            // Save history
+            state.aiHistory.push(
+                { role: 'user', content: userMsg },
+                { role: 'assistant', content: aiReply }
+            );
+            // Keep last 20 turns
+            if (state.aiHistory.length > 40) state.aiHistory.splice(0, 2);
+
+        } catch(err) {
+            updateAIReplyEl(replyEl, `⚠ Error: ${err.message}`);
+        }
+    }
+
+    // ===================================================================
+    // API KEY VISIBILITY TOGGLE
+    // ===================================================================
+    function toggleKeyVis() {
+        const inp = document.getElementById('apiKeyInput');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    // ===================================================================
+    // RESPONSIVE GRAPH LAYOUT
+    // ===================================================================
+    function handleResize() {
+        if (window.innerWidth < 700) {
+            document.querySelector('.sensor-graph-grid').style.gridTemplateColumns = '1fr';
+        } else {
+            document.querySelector('.sensor-graph-grid').style.gridTemplateColumns = '1fr 2fr';
+        }
+    }
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    </script>
+</body>
+</html>
