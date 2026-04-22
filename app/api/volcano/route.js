@@ -1,18 +1,36 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
+
+// Using your Prisma connection string
+const connectionString = "postgres://4d25951a202fb0d6375a443e4d190433c772440e3eb8d832c99a06f3824dfa76:sk_qUug2x2t-TL6c5GRBBt47@db.prisma.io:5432/postgres?sslmode=require";
+
+const pool = new Pool({
+  connectionString,
+});
+
+export async function GET() {
+  try {
+    const { rows } = await pool.query('SELECT * FROM "Upload" ORDER BY "createdAt" DESC LIMIT 50');
+    return Response.json(rows, {
+      status: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
 
 export async function POST(request) {
   try {
     const raw = await request.text();
     
-    // 1. Check if it's the Startup Message
+    // Handle Startup Message
     if (raw.includes("MIN_ULTRA")) {
-      console.log("System Startup Received:", raw);
-      return Response.json({ success: "Startup Logged" }, { status: 200 });
+      return Response.json({ success: "System Startup Logged" }, { status: 200 });
     }
 
-    // 2. Process Data Line
+    // Process Data Line: 45.67,0,DIST_OK,VIB_OK,DUAL_OK,KILL_OFF,SYS_ON,10.0,3
     const p = raw.split(',');
-    if (p.length < 9) throw new Error("Incomplete data string");
+    if (p.length < 9) throw new Error("Format Mismatch");
 
     const data = {
       dist:  parseFloat(p[0]) || 0,
@@ -26,26 +44,25 @@ export async function POST(request) {
       mV:    parseInt(p[8]) || 3
     };
 
-    // 3. Insert into Database
-    await sql`
+    const query = `
       INSERT INTO "Upload" (
-        "distance", "vibration", 
-        "dist_alert", "seis_alert", "dual_alert", 
-        "kill_state", "sys_state", "min_ultra", "min_seis"
-      ) VALUES (
-        ${data.dist}, ${data.vib}, 
-        ${data.dA}, ${data.vA}, ${data.duA}, 
-        ${data.kill}, ${data.sys}, ${data.mU}, ${data.mV}
-      );
+        "distance", "vibration", "dist_alert", "seis_alert", 
+        "dual_alert", "kill_state", "sys_state", "min_ultra", "min_seis"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
+    
+    const values = [
+      data.dist, data.vib, data.dA, data.vA, 
+      data.duA, data.kill, data.sys, data.mU, data.mV
+    ];
 
-    return Response.json({ success: true }, { status: 200 });
+    await pool.query(query, values);
+
+    return Response.json({ success: true }, { 
+        status: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
-}
-
-export async function GET() {
-    const { rows } = await sql`SELECT * FROM "Upload" ORDER BY "createdAt" DESC LIMIT 50`;
-    return Response.json(rows);
 }
