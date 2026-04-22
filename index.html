@@ -5,1078 +5,570 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volcano Eruption Monitor v5.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        /* ===== CSS VARIABLES & RESET ===== */
         :root {
-            --bg: #000000;
-            --bg2: #0a0a0a;
-            --card: #111111;
-            --border: #1e1e1e;
-            --border2: #2a2a2a;
-            --text: #ffffff;
-            --text2: #aaaaaa;
-            --orange: #f97316;
-            --blue: #3b82f6;
-            --red: #ef4444;
-            --green: #22c55e;
-            --yellow: #eab308;
-            --tab-active: #f97316;
+            --bg:#000;--bg2:#0a0a0a;--card:#0f0f0f;--border:#1c1c1c;--border2:#2a2a2a;
+            --text:#f0f0f0;--text2:#888;--text3:#444;
+            --orange:#f97316;--blue:#3b82f6;--red:#ef4444;--green:#22c55e;--yellow:#eab308;
         }
-        .light {
-            --bg: #f5f5f5;
-            --bg2: #ebebeb;
-            --card: #ffffff;
-            --border: #e0e0e0;
-            --border2: #cccccc;
-            --text: #111111;
-            --text2: #555555;
-        }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { font-size: 14px; }
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Courier New', Courier, monospace;
-            min-height: 100vh;
-            transition: background 0.3s, color 0.3s;
-        }
+        .light{--bg:#f8f8f8;--bg2:#efefef;--card:#fff;--border:#e0e0e0;--border2:#ccc;--text:#111;--text2:#666;--text3:#aaa;}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        html,body{height:100%;}
+        body{background:var(--bg);color:var(--text);font-family:'DM Mono','Courier New',monospace;font-size:13px;overflow-x:hidden;transition:background .25s,color .25s;}
+        ::-webkit-scrollbar{width:4px;height:4px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-        /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-
-        /* ===== STATUS BAR ===== */
-        #statusBar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 36px;
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            z-index: 100;
-            font-size: 11px;
-            transition: background 0.3s;
+        /* STATUS BAR */
+        #statusBar{
+            position:fixed;top:0;left:0;right:0;height:34px;
+            background:var(--card);border-bottom:1px solid var(--border);
+            display:flex;align-items:center;justify-content:space-between;
+            padding:0 16px;z-index:200;font-size:11px;transition:background .25s;
         }
-        #statusBar.alert-dist { background: #7c1c00; }
-        #statusBar.alert-seis { background: #7c3500; }
-        #statusBar.alert-dual { background: #7c0000; animation: flashBar 0.6s infinite; }
-        @keyframes flashBar { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .status-left { display: flex; align-items: center; gap: 10px; }
-        .status-left span { font-weight: bold; color: var(--orange); font-size: 13px; }
-        .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block; }
-        .conn-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
-        .status-right { display: flex; gap: 12px; font-size: 11px; color: var(--text2); }
-        .sys-badge {
-            padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold;
-            background: #222; color: var(--text2);
-        }
-        .sys-badge.active { background: #14532d; color: var(--green); }
-        .sys-badge.kill { background: #450a0a; color: var(--red); }
+        #statusBar.alert-dist{background:#2a0900;border-bottom-color:var(--red);}
+        #statusBar.alert-seis{background:#1f0f00;border-bottom-color:var(--orange);}
+        #statusBar.alert-dual{background:#2a0000;border-bottom-color:var(--red);animation:flashBar .7s infinite;}
+        @keyframes flashBar{50%{opacity:.55;}}
+        .sb-left{display:flex;align-items:center;gap:10px;}
+        .sb-brand{font-weight:500;color:var(--orange);letter-spacing:.04em;}
+        .live-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;transition:background .3s,box-shadow .3s;}
+        .live-dot.on{background:var(--green);box-shadow:0 0 7px var(--green);animation:dotPulse 2s infinite;}
+        .live-dot.err{background:var(--red);}
+        @keyframes dotPulse{50%{opacity:.45;}}
+        #liveLabel{font-size:10px;color:var(--text2);letter-spacing:.06em;}
+        .sb-right{display:flex;align-items:center;gap:10px;}
+        .badge{padding:2px 7px;border-radius:3px;font-size:10px;font-weight:500;letter-spacing:.05em;background:var(--border);color:var(--text3);transition:all .2s;}
+        .badge.on{background:#0d2e1a;color:var(--green);}
+        .badge.kill{background:#2e0d0d;color:var(--red);}
+        #alertBadge{color:var(--red);font-weight:500;font-size:11px;}
+        #clockEl{font-size:10px;color:var(--text3);}
 
-        /* ===== LAYOUT ===== */
-        #app { padding-top: 36px; display: flex; flex-direction: column; height: 100vh; }
+        /* LAYOUT */
+        #app{display:flex;flex-direction:column;height:100vh;padding-top:34px;}
 
-        /* ===== TABS ===== */
-        #tabBar {
-            display: flex;
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            overflow-x: auto;
-            flex-shrink: 0;
+        /* TABS */
+        #tabBar{background:var(--card);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;flex-shrink:0;}
+        .tab-btn{
+            padding:9px 18px;border:none;background:none;color:var(--text3);cursor:pointer;
+            font-family:inherit;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+            border-bottom:2px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap;
         }
-        .tab-btn {
-            padding: 10px 20px;
-            border: none;
-            background: none;
-            color: var(--text2);
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .tab-btn:hover { color: var(--text); }
-        .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+        .tab-btn:hover{color:var(--text);}
+        .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);}
 
-        /* ===== TAB PANELS ===== */
-        #tabContent { flex: 1; overflow: hidden; }
-        .tab-panel { display: none; height: 100%; overflow-y: auto; padding: 16px; }
-        .tab-panel.active { display: block; }
+        /* PANELS */
+        #tabContent{flex:1;overflow:hidden;}
+        .tab-panel{display:none;height:100%;overflow-y:auto;}
+        .tab-panel.active{display:block;}
+        .pad{padding:14px;}
 
-        /* ===== CARDS ===== */
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-        .card-title {
-            font-size: 10px;
-            font-weight: bold;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text2);
-            margin-bottom: 12px;
-        }
+        /* SHARED */
+        .card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:10px;}
+        .card-title{font-size:9px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
+        .btn{border:none;border-radius:4px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;transition:opacity .15s,transform .1s;}
+        .btn:hover{opacity:.82;}.btn:active{transform:scale(.97);}.btn:disabled{opacity:.3;cursor:not-allowed;}
+        .btn-orange{background:var(--orange);color:#000;}
+        .btn-blue{background:var(--blue);color:#fff;}
+        .btn-red{background:var(--red);color:#fff;}
+        .btn-green{background:var(--green);color:#000;}
+        .btn-ghost{background:var(--border);color:var(--text2);}
+        .btn-sm{padding:4px 10px;font-size:10px;}
+        .inp{background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:7px 10px;font-family:inherit;font-size:12px;outline:none;transition:border-color .2s;}
+        .inp:focus{border-color:var(--orange);}
+        .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
 
-        /* ===== CONNECTION TAB ===== */
-        #connectBtn {
-            background: var(--orange);
-            color: #000;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            transition: opacity 0.2s;
-        }
-        #connectBtn:hover { opacity: 0.85; }
-        #connectBtn.connected { background: #ef4444; color: #fff; }
+        /* ===== LIVE TAB ===== */
+        .live-wrap{max-width:1200px;margin:0 auto;}
 
-        .conn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        #connStatus { font-size: 11px; color: var(--text2); }
+        /* API bar */
+        .api-bar{
+            display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+            padding:9px 14px;background:var(--card);border:1px solid var(--border);
+            border-radius:6px;margin-bottom:10px;font-size:10px;
+        }
+        .api-endpoint{color:var(--text3);letter-spacing:.02em;flex:1;word-break:break-all;}
+        #apiLastTs{color:var(--text2);}
+        #apiErrMsg{color:var(--red);}
+        #pollCount{color:var(--text3);margin-left:auto;}
+
+        /* Live grid */
+        .live-grid{display:grid;grid-template-columns:270px 1fr;gap:10px;margin-bottom:10px;}
+        @media(max-width:740px){.live-grid{grid-template-columns:1fr;}}
 
         /* Sensor cards */
-        .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .sensor-card {
-            background: var(--bg2);
-            border: 1px solid var(--border2);
-            border-radius: 6px;
-            padding: 14px;
+        .sensor-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+        @media(max-width:460px){.sensor-pair{grid-template-columns:1fr;}}
+        .sensor-card{
+            background:var(--card);border:1px solid var(--border);border-radius:6px;
+            padding:14px 16px;position:relative;overflow:hidden;
+            transition:border-color .25s,background .25s;
         }
-        .sensor-card.alerting { border-color: var(--red); background: #1a0000; }
-        .sensor-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
-        .sensor-value { font-size: 28px; font-weight: bold; letter-spacing: -0.02em; margin-bottom: 4px; }
-        .sensor-value.blue { color: var(--blue); }
-        .sensor-value.orange { color: var(--orange); }
-        .sensor-status { font-size: 11px; }
-        .sensor-status.ok { color: var(--green); }
-        .sensor-status.alert { color: var(--red); font-weight: bold; }
+        .sensor-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--border2));transition:background .25s;}
+        .sensor-card.alerting{border-color:var(--red);background:#130000;}
+        .sensor-card.alerting::before{background:var(--red);}
+        .sc-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+        .sc-val{font-family:'DM Serif Display',Georgia,serif;font-size:34px;font-weight:400;letter-spacing:-.02em;color:var(--c,var(--text));line-height:1;margin-bottom:2px;transition:color .25s;}
+        .sc-unit{font-size:10px;color:var(--text3);margin-bottom:8px;}
+        .sc-status{font-size:10px;font-weight:500;letter-spacing:.06em;}
+        .sc-status.ok{color:var(--green);}.sc-status.alert{color:var(--red);}
+        .sc-thresh{font-size:9px;color:var(--text3);margin-top:4px;}
 
-        /* Progress bars */
-        .progress-section { margin-bottom: 12px; }
-        .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; }
-        .progress-label { width: 80px; color: var(--text2); }
-        .progress-bar { flex: 1; height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--blue); border-radius: 4px; transition: width 0.3s, background 0.3s; }
-        .progress-fill.seis { background: var(--orange); }
-        .progress-fill.danger { background: var(--red); }
-        .progress-pct { width: 36px; text-align: right; color: var(--text2); }
+        /* Progress */
+        .prog-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+        .prog-label{font-size:10px;color:var(--text2);width:68px;flex-shrink:0;}
+        .prog-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+        .prog-fill{height:100%;border-radius:3px;transition:width .4s,background .3s;}
+        .prog-fill.u{background:var(--blue);}
+        .prog-fill.s{background:var(--orange);}
+        .prog-fill.danger{background:var(--red);}
+        .prog-pct{font-size:10px;color:var(--text3);width:34px;text-align:right;}
 
-        /* Graph area */
-        .graph-container { margin-bottom: 12px; }
-        .graph-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; }
-        .graph-title { font-size: 10px; color: var(--text2); margin-bottom: 6px; display: flex; justify-content: space-between; }
-        canvas { display: block; }
+        /* Graphs */
+        .graph-panel{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;}
+        .graph-toolbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+        .gtb-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-right:4px;}
+        .zoom-btn{padding:3px 9px;border:1px solid var(--border2);background:transparent;color:var(--text3);border-radius:3px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s;}
+        .zoom-btn:hover,.zoom-btn.active{border-color:var(--blue);color:var(--blue);}
+        .graph-wrap{margin-bottom:8px;}
+        .graph-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:10px;}
+        .graph-hdr-l{display:flex;align-items:center;gap:6px;}
+        .gdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+        /* Raw JSON snapshot */
+        #rawJson{font-size:10px;color:var(--text3);white-space:pre-wrap;word-break:break-all;line-height:1.55;max-height:110px;overflow-y:auto;}
 
         /* Data log */
-        #dataLog {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            height: 160px;
-            overflow-y: auto;
-            padding: 8px;
-            font-size: 11px;
-            color: #00cc00;
-            font-family: 'Courier New', monospace;
-        }
-        .log-entry { margin-bottom: 2px; white-space: pre; }
-        .log-alert { color: var(--red); }
-        .log-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .log-head .card-title { margin: 0; }
+        .log-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+        #dataLog{background:var(--bg);border:1px solid var(--border);border-radius:5px;height:150px;overflow-y:auto;padding:8px 10px;font-size:11px;color:#3a9e3a;font-family:'DM Mono',monospace;line-height:1.5;}
+        .ll{white-space:pre;margin-bottom:1px;}
+        .ll.e{color:var(--red);}
+        .ll.d{color:var(--text3);}
 
-        /* ===== SETTINGS TAB ===== */
-        .settings-section { margin-bottom: 16px; }
-        .settings-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .settings-label { font-size: 11px; color: var(--text2); width: 120px; flex-shrink: 0; }
-        .inp {
-            background: var(--bg2);
-            border: 1px solid var(--border2);
-            color: var(--text);
-            border-radius: 4px;
-            padding: 6px 10px;
-            font-family: inherit;
-            font-size: 12px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .inp:focus { border-color: var(--orange); }
-        .inp-num { width: 80px; }
-        .inp-key { width: 220px; }
-        .inp-select { cursor: pointer; }
+        /* ===== SETTINGS ===== */
+        #panel-settings .pad{max-width:620px;}
+        .sg-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+        .sg-label{font-size:11px;color:var(--text2);width:130px;flex-shrink:0;}
+        .inp-num{width:78px;}
+        .inp-wide{max-width:280px;}
+        .theme-grp{display:flex;gap:6px;}
+        .theme-opt{padding:6px 14px;border:1px solid var(--border2);border-radius:4px;cursor:pointer;background:transparent;font-family:inherit;font-size:11px;color:var(--text2);transition:all .15s;}
+        .theme-opt.active{border-color:var(--orange);color:var(--orange);}
+        .cmd-row{display:flex;gap:6px;flex-wrap:wrap;}
+        .cb-row{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;}
+        input[type=checkbox]{accent-color:var(--orange);width:14px;height:14px;cursor:pointer;}
+        .key-wrap{position:relative;display:inline-flex;align-items:center;}
+        .key-wrap .inp{padding-right:30px;}
+        .key-eye{position:absolute;right:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;}
 
-        .btn {
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-family: inherit;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: opacity 0.2s, transform 0.1s;
+        /* ===== SHELL ===== */
+        #shellOutput{
+            height:calc(100vh - 200px);min-height:180px;overflow-y:auto;
+            background:#000;border:1px solid #1a1a1a;border-radius:6px;
+            padding:10px;font-size:12px;color:#3a9e3a;font-family:'DM Mono',monospace;margin-bottom:8px;
         }
-        .btn:hover { opacity: 0.85; }
-        .btn:active { transform: scale(0.97); }
-        .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .btn-orange { background: var(--orange); color: #000; }
-        .btn-blue { background: var(--blue); color: #fff; }
-        .btn-red { background: var(--red); color: #fff; }
-        .btn-green { background: var(--green); color: #000; }
-        .btn-gray { background: #333; color: var(--text); }
-        .btn-sm { padding: 4px 10px; font-size: 10px; }
+        .sh-l{margin-bottom:2px;white-space:pre-wrap;}
+        .sh-cmd{color:var(--orange);}
+        .sh-ok{color:var(--green);}
+        .sh-err{color:var(--red);}
+        .sh-dim{color:#3a3a3a;}
+        .shell-row{display:flex;gap:8px;align-items:center;}
+        .sh-prompt{color:var(--orange);font-size:16px;}
+        #shellInput{flex:1;background:#000;border:1px solid #222;color:#3a9e3a;border-radius:4px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:13px;outline:none;}
+        #shellInput:focus{border-color:var(--orange);}
 
-        .cmd-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+        /* ===== AI ===== */
+        .ai-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+        .ai-title{font-size:12px;font-weight:500;color:var(--orange);letter-spacing:.06em;}
+        .pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+        .pill{padding:4px 10px;background:var(--border);border:1px solid var(--border2);color:var(--text3);border-radius:20px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s;}
+        .pill:hover{border-color:var(--orange);color:var(--orange);}
+        #aiChat{overflow-y:auto;padding:4px 2px;margin-bottom:10px;}
+        .ai-msg{max-width:88%;margin-bottom:10px;padding:10px 14px;border-radius:6px;font-size:12px;line-height:1.65;white-space:pre-wrap;}
+        .ai-msg.user{background:var(--orange);color:#000;margin-left:auto;border-bottom-right-radius:2px;}
+        .ai-msg.assistant{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:2px;}
+        .ai-msg.system{background:#0d0d0d;border:1px solid var(--border);color:var(--text3);font-size:11px;max-width:100%;}
+        .dots span{width:5px;height:5px;border-radius:50%;background:var(--text3);display:inline-block;animation:blink 1.2s infinite;}
+        .dots span:nth-child(2){animation-delay:.2s;}.dots span:nth-child(3){animation-delay:.4s;}
+        @keyframes blink{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
+        .ai-input-row{display:flex;gap:8px;}
+        #aiInput{flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:10px 14px;font-family:inherit;font-size:12px;outline:none;resize:none;}
+        #aiInput:focus{border-color:var(--orange);}
 
-        .theme-toggle { display: flex; gap: 8px; }
-        .theme-opt {
-            padding: 6px 14px;
-            border: 1px solid var(--border2);
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 11px;
-            background: var(--bg2);
-            color: var(--text2);
-            transition: all 0.2s;
-        }
-        .theme-opt.active { border-color: var(--orange); color: var(--orange); }
+        /* ===== INTRO ===== */
+        .intro-wrap{max-width:860px;margin:0 auto;padding:46px 20px 80px;}
+        .intro-eyebrow{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:28px;}
+        .e-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 8px var(--orange);animation:dotPulse 2s infinite;}
+        .e-ver{margin-left:auto;padding:2px 8px;border:1px solid var(--border2);border-radius:20px;font-size:9px;}
+        .intro-h1{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(34px,7vw,70px);font-weight:400;line-height:1.08;letter-spacing:-.02em;margin-bottom:22px;display:flex;flex-wrap:wrap;gap:0 .25em;}
+        .iw{display:inline-block;opacity:0;transform:translateY(16px);animation:wup .5s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--d,0ms);}
+        @keyframes wup{to{opacity:1;transform:none;}}
+        .ia{color:var(--orange);font-style:italic;}
+        .intro-sub{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:32px;animation:fadeup .6s .3s both;}
+        @keyframes fadeup{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+        .intro-cta{display:inline-flex;align-items:center;gap:10px;padding:10px 22px;background:var(--orange);color:#000;border:none;border-radius:3px;font-family:inherit;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .15s,transform .15s;animation:fadeup .6s .45s both;}
+        .intro-cta:hover{background:#fb923c;transform:translateX(3px);}
+        .intro-arrow{transition:transform .15s;}
+        .intro-cta:hover .intro-arrow{transform:translateX(4px);}
+        .intro-rule{height:1px;background:var(--border);margin:44px 0 36px;}
+        .sec-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:20px;}
+        .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-bottom:30px;}
+        @media(max-width:580px){.feat-grid{grid-template-columns:1fr 1fr;}}
+        .feat-cell{background:var(--bg);padding:20px 18px;opacity:0;animation:fadeup .5s calc(var(--i,0)*55ms + 80ms) both;transition:background .15s;}
+        .feat-cell:hover{background:var(--card);}
+        .fi{font-size:14px;color:var(--orange);margin-bottom:10px;}
+        .fn{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
+        .fd{font-size:11px;color:var(--text2);line-height:1.7;}
+        .stack-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:30px;}
+        .sp{padding:4px 11px;border:1px solid var(--border2);border-radius:2px;font-size:10px;color:var(--text2);transition:border-color .15s,color .15s;}
+        .sp:hover{border-color:var(--orange);color:var(--orange);}
+        .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;}
+        @media(max-width:540px){.contact-grid{grid-template-columns:1fr;gap:28px;}}
+        .cn{font-family:'DM Serif Display',Georgia,serif;font-size:26px;font-weight:400;margin-bottom:4px;}
+        .cr{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:16px;}
+        .cb{font-size:12px;color:var(--text2);line-height:1.8;}
+        .cl-links{display:flex;flex-direction:column;}
+        .cl-link{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text2);font-size:11px;transition:color .15s,padding-left .15s;cursor:pointer;}
+        .cl-link:first-child{border-top:1px solid var(--border);}
+        .cl-link:hover{color:var(--text);padding-left:4px;}
+        .cl-icon{color:var(--orange);width:16px;flex-shrink:0;}
+        .cl-arr{margin-left:auto;opacity:0;transition:opacity .15s;}
+        .cl-link:hover .cl-arr{opacity:1;}
+        .avail-row{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);}
+        .avail-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:dotPulse 2s infinite;}
+        .intro-foot{margin-top:60px;display:flex;gap:10px;font-size:10px;color:var(--text3);opacity:.4;flex-wrap:wrap;}
 
-        .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
-        input[type=checkbox] { accent-color: var(--orange); width: 14px; height: 14px; cursor: pointer; }
-
-        /* ===== SHELL TAB ===== */
-        #shellOutput {
-            background: #000;
-            border: 1px solid #1a1a1a;
-            border-radius: 6px;
-            height: calc(100vh - 220px);
-            min-height: 200px;
-            overflow-y: auto;
-            padding: 10px;
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-            color: #00cc00;
-            margin-bottom: 10px;
-        }
-        .shell-line { margin-bottom: 2px; white-space: pre-wrap; }
-        .shell-cmd { color: var(--orange); }
-        .shell-ok { color: var(--green); }
-        .shell-err { color: var(--red); }
-        .shell-info { color: #666; }
-
-        .shell-input-row { display: flex; gap: 8px; align-items: center; }
-        .shell-prompt { color: var(--orange); font-size: 14px; font-weight: bold; }
-        #shellInput {
-            flex: 1;
-            background: #000;
-            border: 1px solid #2a2a2a;
-            color: var(--green);
-            border-radius: 4px;
-            padding: 8px 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            outline: none;
-        }
-        #shellInput:focus { border-color: var(--orange); }
-
-        /* ===== AI TAB ===== */
-        #aiChat {
-            height: calc(100vh - 220px);
-            min-height: 200px;
-            overflow-y: auto;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-        .ai-msg {
-            max-width: 85%;
-            margin-bottom: 12px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-        .ai-msg.user {
-            background: var(--orange);
-            color: #000;
-            margin-left: auto;
-            border-bottom-right-radius: 2px;
-        }
-        .ai-msg.assistant {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 2px;
-        }
-        .ai-msg.system {
-            background: #1a1a00;
-            border: 1px solid #333300;
-            color: var(--yellow);
-            font-size: 11px;
-            max-width: 100%;
-        }
-        .ai-cmd-exec { color: var(--green); font-weight: bold; }
-
-        .ai-input-row { display: flex; gap: 8px; }
-        #aiInput {
-            flex: 1;
-            background: var(--card);
-            border: 1px solid var(--border2);
-            color: var(--text);
-            border-radius: 6px;
-            padding: 10px 14px;
-            font-family: inherit;
-            font-size: 12px;
-            outline: none;
-            resize: none;
-        }
-        #aiInput:focus { border-color: var(--orange); }
-
-        .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .ai-title { font-size: 13px; font-weight: bold; color: var(--orange); }
-
-        .suggested-prompts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-        .suggested-btn {
-            padding: 4px 10px;
-            background: var(--bg2);
-            border: 1px solid var(--border2);
-            color: var(--text2);
-            border-radius: 20px;
-            font-size: 10px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .suggested-btn:hover { border-color: var(--orange); color: var(--orange); }
-
-        .typing-dots { display: inline-flex; gap: 3px; align-items: center; }
-        .typing-dots span {
-            width: 5px; height: 5px; border-radius: 50%;
-            background: var(--text2); display: inline-block;
-            animation: blink 1.2s infinite;
-        }
-        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
-
-        /* ===== MOBILE BANNER ===== */
-        #mobileBanner {
-            display: none;
-            background: #1a0000;
-            border: 1px solid var(--red);
-            border-radius: 6px;
-            padding: 10px 14px;
-            font-size: 11px;
-            color: var(--red);
-            margin-bottom: 12px;
-        }
-
-        /* ===== GRAPH TOOLBAR ===== */
-        .graph-toolbar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
-        .graph-toolbar span { font-size: 10px; color: var(--text2); margin-right: 4px; }
-        .zoom-btn {
-            padding: 3px 8px;
-            border: 1px solid var(--border2);
-            background: var(--bg2);
-            color: var(--text2);
-            border-radius: 3px;
-            font-size: 10px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .zoom-btn.active, .zoom-btn:hover { border-color: var(--blue); color: var(--blue); }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
-            .sensor-grid { grid-template-columns: 1fr; }
-            #mobileBanner { display: block; }
-            .settings-label { width: 100%; margin-bottom: 2px; }
-        }
-        @media (max-width: 800px) {
-            .sensor-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        /* ===== ALERT OVERLAY ===== */
-        #alertOverlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 200;
-            animation: flashOverlay 0.6s infinite;
-        }
-        @keyframes flashOverlay {
-            0%,100% { background: transparent; }
-            50% { background: rgba(239,68,68,0.08); }
-        }
-
-        /* ===== EXPORT BUTTONS ===== */
-        .export-row { display: flex; gap: 8px; flex-wrap: wrap; }
-
-        /* ===== DIVIDER ===== */
-        .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-
-        hr.divider { margin: 10px 0; }
-
-        /* ===== API key toggle ===== */
-        .key-wrap { position: relative; display: inline-flex; align-items: center; }
-        .key-wrap .inp-key { padding-right: 32px; }
-        .key-eye {
-            position: absolute;
-            right: 8px;
-            background: none;
-            border: none;
-            color: var(--text2);
-            cursor: pointer;
-            font-size: 13px;
-            padding: 0;
-        }
-        /* ===== INTRO / CONTACT TAB ===== */
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
-
-        .intro-wrap {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 56px 24px 80px;
-            font-family: 'DM Mono', 'Courier New', monospace;
-        }
-
-        /* Hero */
-        .intro-hero { margin-bottom: 64px; }
-
-        .intro-eyebrow {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 10px;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--text2);
-            margin-bottom: 28px;
-            animation: introFade 0.6s ease both;
-        }
-        .intro-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--orange);
-            box-shadow: 0 0 8px var(--orange);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
-        .intro-ver {
-            margin-left: auto;
-            padding: 2px 8px;
-            border: 1px solid var(--border2);
-            border-radius: 20px;
-            font-size: 9px;
-        }
-
-        .intro-title {
-            font-family: 'DM Serif Display', Georgia, serif;
-            font-size: clamp(38px, 7vw, 76px);
-            font-weight: 400;
-            line-height: 1.08;
-            letter-spacing: -0.02em;
-            color: var(--text);
-            margin-bottom: 24px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0 0.28em;
-        }
-        .intro-word {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(18px);
-            animation: wordUp 0.55s cubic-bezier(0.16,1,0.3,1) both;
-            animation-delay: var(--d, 0ms);
-        }
-        @keyframes wordUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .intro-accent { color: var(--orange); font-style: italic; }
-
-        .intro-sub {
-            font-size: 13px;
-            color: var(--text2);
-            line-height: 1.8;
-            margin-bottom: 36px;
-            animation: introFade 0.7s 0.3s ease both;
-        }
-        @keyframes introFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-        .intro-br { display: none; }
-        @media(min-width:560px){ .intro-br { display: inline; } }
-
-        .intro-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 11px 24px;
-            background: var(--orange);
-            color: #000;
-            border: none;
-            border-radius: 3px;
-            font-family: 'DM Mono', monospace;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.15s;
-            animation: introFade 0.7s 0.45s ease both;
-        }
-        .intro-cta:hover { background: #fb923c; transform: translateX(3px); }
-        .intro-arrow { transition: transform 0.2s; }
-        .intro-cta:hover .intro-arrow { transform: translateX(4px); }
-
-        /* Rule */
-        .intro-rule {
-            height: 1px;
-            background: var(--border);
-            margin: 48px 0 40px;
-        }
-
-        /* Section label */
-        .intro-section-label {
-            font-size: 9px;
-            letter-spacing: 0.22em;
-            text-transform: uppercase;
-            color: var(--text2);
-            margin-bottom: 24px;
-        }
-
-        /* Features grid */
-        .feat-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background: var(--border);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 4px;
-        }
-        @media(max-width:620px){ .feat-grid { grid-template-columns: 1fr 1fr; } }
-        @media(max-width:400px){ .feat-grid { grid-template-columns: 1fr; } }
-
-        .feat-card {
-            background: var(--bg);
-            padding: 24px 20px;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: introFade 0.5s calc(var(--fi, 0) * 60ms + 100ms) ease both;
-            transition: background 0.2s;
-        }
-        .feat-card:hover { background: var(--card); }
-
-        .feat-icon {
-            font-size: 16px;
-            color: var(--orange);
-            margin-bottom: 12px;
-            line-height: 1;
-        }
-        .feat-name {
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .feat-desc {
-            font-size: 11px;
-            color: var(--text2);
-            line-height: 1.7;
-        }
-
-        /* Stack pills */
-        .stack-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .stack-pill {
-            padding: 5px 12px;
-            border: 1px solid var(--border2);
-            border-radius: 2px;
-            font-size: 10px;
-            letter-spacing: 0.06em;
-            color: var(--text2);
-            transition: border-color 0.2s, color 0.2s;
-        }
-        .stack-pill:hover { border-color: var(--orange); color: var(--orange); }
-
-        /* Contact */
-        .contact-block {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 48px;
-            align-items: start;
-        }
-        @media(max-width:620px){ .contact-block { grid-template-columns: 1fr; gap: 32px; } }
-
-        .contact-name {
-            font-family: 'DM Serif Display', Georgia, serif;
-            font-size: 28px;
-            color: var(--text);
-            margin-bottom: 4px;
-            font-weight: 400;
-        }
-        .contact-role {
-            font-size: 10px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--orange);
-            margin-bottom: 18px;
-        }
-        .contact-bio {
-            font-size: 12px;
-            color: var(--text2);
-            line-height: 1.8;
-        }
-
-        .contact-links { display: flex; flex-direction: column; gap: 2px; }
-
-        .contact-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-            text-decoration: none;
-            color: var(--text2);
-            font-size: 11px;
-            letter-spacing: 0.04em;
-            transition: color 0.2s, padding-left 0.2s;
-            cursor: pointer;
-        }
-        .contact-link:hover { color: var(--text); padding-left: 4px; }
-        .contact-link:first-child { border-top: 1px solid var(--border); }
-        .cl-icon { color: var(--orange); font-size: 12px; width: 16px; flex-shrink: 0; }
-        .cl-arr { margin-left: auto; opacity: 0; transition: opacity 0.2s; font-size: 12px; }
-        .contact-link:hover .cl-arr { opacity: 1; }
-
-        .contact-avail {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 18px;
-            font-size: 10px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--green);
-        }
-        .avail-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: var(--green);
-            animation: pulse 2s infinite;
-        }
-
-        /* Footer */
-        .intro-footer {
-            margin-top: 64px;
-            display: flex;
-            gap: 12px;
-            font-size: 10px;
-            color: var(--text2);
-            opacity: 0.5;
-            letter-spacing: 0.06em;
-            flex-wrap: wrap;
-        }
-        .intro-footer-sep { opacity: 0.4; }
+        /* ALERT OVERLAY */
+        #alertOverlay{display:none;position:fixed;inset:0;pointer-events:none;z-index:150;animation:flashOv .7s infinite;}
+        @keyframes flashOv{50%{background:rgba(239,68,68,.07);}}
     </style>
 </head>
 <body>
-    <!-- Alert Overlay -->
     <div id="alertOverlay"></div>
 
     <!-- Status Bar -->
     <div id="statusBar">
-        <div class="status-left">
-            <span>🌋 VOLCANO MONITOR v5.0</span>
-            <span class="conn-dot" id="connDot"></span>
-            <span id="connLabel" style="color:var(--text2);font-size:11px;">Disconnected</span>
+        <div class="sb-left">
+            <span class="sb-brand">🌋 VOLCANO MONITOR v5.0</span>
+            <span class="live-dot" id="liveDot"></span>
+            <span id="liveLabel" style="font-size:10px;color:var(--text2);letter-spacing:.06em;">Connecting…</span>
         </div>
-        <div class="status-right">
-            <span id="sysBadge" class="sys-badge">SYS: OFF</span>
-            <span id="killBadge" class="sys-badge">KILL: OFF</span>
-            <span id="alertMsg" style="color:var(--red);font-weight:bold;"></span>
-            <span id="clockEl" style="color:var(--text2);"></span>
+        <div class="sb-right">
+            <span class="badge" id="sysBadge">SYS: OFF</span>
+            <span class="badge" id="killBadge">KILL: OFF</span>
+            <span id="alertBadge"></span>
+            <span id="clockEl"></span>
         </div>
     </div>
 
     <div id="app">
-        <!-- Tab Bar -->
         <div id="tabBar">
             <button class="tab-btn" onclick="switchTab('intro')">◈ About</button>
-            <button class="tab-btn active" onclick="switchTab('connection')">📡 Connection</button>
+            <button class="tab-btn" onclick="switchTab('live')">⬤ Live</button>
             <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
-            <button class="tab-btn" onclick="switchTab('shell')">🖥 Shell</button>
-            <button class="tab-btn" onclick="switchTab('ai')">🤖 AI Control</button>
+            <button class="tab-btn" onclick="switchTab('shell')">› Shell</button>
+            <button class="tab-btn" onclick="switchTab('ai')">AI Control</button>
         </div>
 
-        <!-- Tab Content -->
         <div id="tabContent">
 
-            <!-- ===== TAB 1: CONNECTION ===== -->
-            <div class="tab-panel" id="panel-connection">
-                <div id="mobileBanner">⚠ Web Serial API requires desktop Chrome or Edge 89+. UI is responsive but serial won't work on mobile.</div>
+            <!-- ========== LIVE ========== -->
+            <div class="tab-panel" id="panel-live">
+                <div class="pad live-wrap">
 
-                <!-- Connect -->
-                <div class="card">
-                    <div class="conn-header">
-                        <button id="connectBtn" onclick="toggleConnection()">Connect to COM Port</button>
-                        <span id="connStatus">Not connected</span>
-                    </div>
-                </div>
-
-                <!-- Sensor Display + Graphs -->
-                <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;" class="sensor-graph-grid">
-                    <!-- Sensors -->
-                    <div>
-                        <div class="sensor-grid">
-                            <div class="sensor-card" id="ultraCard">
-                                <div class="sensor-label">Ultrasonic</div>
-                                <div class="sensor-value blue" id="ultraVal">—</div>
-                                <div class="sensor-status ok" id="ultraStatus">No Signal</div>
-                            </div>
-                            <div class="sensor-card" id="seisCard">
-                                <div class="sensor-label">Seismic</div>
-                                <div class="sensor-value orange" id="seisVal">—</div>
-                                <div class="sensor-status ok" id="seisStatus">No Signal</div>
-                            </div>
-                        </div>
-                        <!-- Progress Bars -->
-                        <div class="card">
-                            <div class="card-title">Threshold Levels</div>
-                            <div class="progress-row">
-                                <span class="progress-label" style="color:var(--blue)">Ultrasonic</span>
-                                <div class="progress-bar"><div class="progress-fill" id="ultraBar" style="width:0%"></div></div>
-                                <span class="progress-pct" id="ultraPct">0%</span>
-                            </div>
-                            <div class="progress-row">
-                                <span class="progress-label" style="color:var(--orange)">Seismic</span>
-                                <div class="progress-bar"><div class="progress-fill seis" id="seisBar" style="width:0%"></div></div>
-                                <span class="progress-pct" id="seisPct">0%</span>
-                            </div>
-                        </div>
+                    <!-- API status row -->
+                    <div class="api-bar">
+                        <span class="live-dot on" id="apiDot" style="flex-shrink:0"></span>
+                        <span class="api-endpoint" id="apiEndpoint">https://volcano-monitor-g4hl.vercel.app/api/volcano</span>
+                        <span id="apiErrMsg"></span>
+                        <span id="pollCount" style="font-size:10px;color:var(--text3);">—</span>
+                        <span style="font-size:10px;color:var(--text2);">Last: <span id="apiLastTs">—</span></span>
+                        <button class="btn btn-ghost btn-sm" id="pauseBtn" onclick="togglePolling()">Pause</button>
                     </div>
 
-                    <!-- Graphs -->
-                    <div class="card" style="padding:12px;">
-                        <div class="graph-toolbar">
-                            <span>Zoom:</span>
-                            <button class="zoom-btn" onclick="setZoom(60)">60pt</button>
-                            <button class="zoom-btn active" onclick="setZoom(120)">120pt</button>
-                            <button class="zoom-btn" onclick="setZoom(240)">240pt</button>
-                            <button class="zoom-btn" onclick="setZoom('live')" style="margin-left:auto">Live</button>
-                        </div>
-                        <div class="graph-wrap">
-                            <div class="graph-title">
-                                <span style="color:var(--blue)">● Ultrasonic Distance (cm)</span>
-                                <span style="color:var(--text2)" id="ultraThreshLabel">Threshold: 100cm</span>
-                            </div>
-                            <canvas id="ultraChart" height="100"></canvas>
-                        </div>
-                        <div class="graph-wrap">
-                            <div class="graph-title">
-                                <span style="color:var(--orange)">● Seismic (raw)</span>
-                                <span style="color:var(--text2)" id="seisThreshLabel">Threshold: 50</span>
-                            </div>
-                            <canvas id="seisChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
+                    <!-- Grid -->
+                    <div class="live-grid">
 
-                <!-- Data Log -->
-                <div class="card">
-                    <div class="log-head">
-                        <div class="card-title">Data Log</div>
-                        <div style="display:flex;gap:8px;">
-                            <button class="btn btn-gray btn-sm" onclick="clearLog()">Clear</button>
-                            <button class="btn btn-blue btn-sm" onclick="downloadCSV()">CSV</button>
-                            <button class="btn btn-blue btn-sm" onclick="downloadJSON()">JSON</button>
+                        <!-- Left column -->
+                        <div>
+                            <div class="sensor-pair">
+                                <div class="sensor-card" id="ultraCard" style="--c:var(--blue)">
+                                    <div class="sc-label">Ultrasonic</div>
+                                    <div class="sc-val" id="ultraVal">—</div>
+                                    <div class="sc-unit">cm</div>
+                                    <div class="sc-status ok" id="ultraStatus">No data</div>
+                                    <div class="sc-thresh" id="ultraThreshDisp">Threshold —</div>
+                                </div>
+                                <div class="sensor-card" id="seisCard" style="--c:var(--orange)">
+                                    <div class="sc-label">Seismic</div>
+                                    <div class="sc-val" id="seisVal">—</div>
+                                    <div class="sc-unit">raw ADC</div>
+                                    <div class="sc-status ok" id="seisStatus">No data</div>
+                                    <div class="sc-thresh" id="seisThreshDisp">Threshold —</div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-title">Threshold levels</div>
+                                <div class="prog-row">
+                                    <span class="prog-label">Ultrasonic</span>
+                                    <div class="prog-track"><div class="prog-fill u" id="ultraBar" style="width:0%"></div></div>
+                                    <span class="prog-pct" id="ultraPct">0%</span>
+                                </div>
+                                <div class="prog-row">
+                                    <span class="prog-label">Seismic</span>
+                                    <div class="prog-track"><div class="prog-fill s" id="seisBar" style="width:0%"></div></div>
+                                    <span class="prog-pct" id="seisPct">0%</span>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-title">Latest snapshot</div>
+                                <pre id="rawJson">—</pre>
+                            </div>
+                        </div>
+
+                        <!-- Right column: graphs -->
+                        <div class="graph-panel">
+                            <div class="graph-toolbar">
+                                <span class="gtb-label">Window</span>
+                                <button class="zoom-btn" onclick="setZoom(event,60)">60s</button>
+                                <button class="zoom-btn active" onclick="setZoom(event,120)">120s</button>
+                                <button class="zoom-btn" onclick="setZoom(event,240)">240s</button>
+                            </div>
+                            <div class="graph-wrap">
+                                <div class="graph-hdr">
+                                    <div class="graph-hdr-l">
+                                        <div class="gdot" style="background:var(--blue)"></div>
+                                        <span style="font-size:10px;color:var(--text2)">Ultrasonic distance (cm)</span>
+                                    </div>
+                                    <span style="font-size:10px;color:var(--text3)" id="ultraThreshLabel">Threshold: 100 cm</span>
+                                </div>
+                                <canvas id="ultraChart" height="110"></canvas>
+                            </div>
+                            <div class="graph-wrap">
+                                <div class="graph-hdr">
+                                    <div class="graph-hdr-l">
+                                        <div class="gdot" style="background:var(--orange)"></div>
+                                        <span style="font-size:10px;color:var(--text2)">Seismic (raw ADC)</span>
+                                    </div>
+                                    <span style="font-size:10px;color:var(--text3)" id="seisThreshLabel">Threshold: 50</span>
+                                </div>
+                                <canvas id="seisChart" height="110"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div id="dataLog"><span class="log-entry shell-info">[--:--:--] Waiting for serial data...</span></div>
+
+                    <!-- Log -->
+                    <div class="card">
+                        <div class="log-hdr">
+                            <div class="card-title" style="margin:0">Data log</div>
+                            <div style="display:flex;gap:6px">
+                                <button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button>
+                                <button class="btn btn-blue btn-sm" onclick="downloadCSV()">CSV</button>
+                                <button class="btn btn-blue btn-sm" onclick="downloadJSON_()">JSON</button>
+                            </div>
+                        </div>
+                        <div id="dataLog"><div class="ll d">[--:--:--] Waiting for database…</div></div>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- ===== TAB 2: SETTINGS ===== -->
+            <!-- ========== SETTINGS ========== -->
             <div class="tab-panel" id="panel-settings">
+                <div class="pad" style="max-width:620px">
 
-                <!-- Appearance -->
-                <div class="card settings-section">
-                    <div class="card-title">Appearance</div>
-                    <div class="theme-toggle">
-                        <button class="theme-opt active" id="themeBtn-dark" onclick="setTheme('dark')">🌑 Dark</button>
-                        <button class="theme-opt" id="themeBtn-light" onclick="setTheme('light')">☀️ Light</button>
-                    </div>
-                </div>
-
-                <!-- Serial Connection -->
-                <div class="card settings-section">
-                    <div class="card-title">Serial Connection</div>
-                    <div class="settings-row">
-                        <button id="connectBtn2" class="btn btn-orange" onclick="toggleConnection()">Connect</button>
-                        <span id="connStatus2" style="font-size:11px;color:var(--text2);">Disconnected</span>
-                    </div>
-                </div>
-
-                <!-- Alarm Thresholds -->
-                <div class="card settings-section">
-                    <div class="card-title">Alarm Thresholds</div>
-                    <div class="settings-row">
-                        <span class="settings-label">Ultrasonic MIN</span>
-                        <input type="number" class="inp inp-num" id="ultraThreshInput" value="100" min="0" max="520">
-                        <span style="font-size:11px;color:var(--text2)">cm</span>
-                        <button class="btn btn-orange btn-sm" onclick="sendThreshUltra()">→ Arduino</button>
-                        <button class="btn btn-gray btn-sm" onclick="saveThreshLocal()">Save Local</button>
-                    </div>
-                    <div class="settings-row">
-                        <span class="settings-label">Seismic MIN</span>
-                        <input type="number" class="inp inp-num" id="seisThreshInput" value="50" min="0" max="1023">
-                        <span style="font-size:11px;color:var(--text2)">raw</span>
-                        <button class="btn btn-orange btn-sm" onclick="sendThreshSeis()">→ Arduino</button>
-                        <button class="btn btn-gray btn-sm" onclick="saveThreshLocal()">Save Local</button>
-                    </div>
-                </div>
-
-                <!-- Arduino Commands -->
-                <div class="card settings-section">
-                    <div class="card-title">Arduino Commands</div>
-                    <div class="cmd-grid">
-                        <button class="btn btn-green" onclick="sendCommand('on')">▶ ON</button>
-                        <button class="btn btn-gray" onclick="sendCommand('off')">■ OFF</button>
-                        <button class="btn btn-red" onclick="sendCommand('kill')">☠ KILL</button>
-                        <button class="btn btn-blue" onclick="sendCommand('reset')">↺ RESET</button>
-                        <button class="btn btn-gray" onclick="sendCommand('456')">⚡ TEST</button>
-                    </div>
-                </div>
-
-                <!-- Sarvam AI -->
-                <div class="card settings-section">
-                    <div class="card-title">Sarvam AI</div>
-                    <div class="settings-row">
-                        <span class="settings-label">API Key</span>
-                        <div class="key-wrap">
-                            <input type="password" class="inp inp-key" id="apiKeyInput" placeholder="sk_...">
-                            <button class="key-eye" onclick="toggleKeyVis()" id="keyEyeBtn">👁</button>
-                        </div>
-                    </div>
-                    <div class="settings-row">
-                        <span class="settings-label">Model</span>
-                        <select class="inp inp-select" id="modelSelect">
-                            <option value="sarvam-105b">sarvam-105b</option>
-                            <option value="sarvam-m">sarvam-m</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <button class="btn btn-orange" onclick="saveAISettings()">Save</button>
-                        <span id="aiSaveMsg" style="font-size:11px;color:var(--green);display:none;">✔ Saved</span>
-                    </div>
-                </div>
-
-                <!-- Data Logging -->
-                <div class="card settings-section">
-                    <div class="card-title">Data Logging</div>
-                    <label class="checkbox-row" style="margin-bottom:10px">
-                        <input type="checkbox" id="autoLogCheck" checked onchange="state.autoLog=this.checked;saveSettings();">
-                        Auto-log to CSV
-                    </label>
-                    <div style="font-size:11px;color:var(--text2);margin-bottom:10px" id="logStats">0 entries logged</div>
-                    <div class="export-row">
-                        <button class="btn btn-blue btn-sm" onclick="downloadCSV()">Download CSV</button>
-                        <button class="btn btn-blue btn-sm" onclick="downloadJSON()">Download JSON</button>
-                        <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear History</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== TAB 3: SHELL ===== -->
-            <div class="tab-panel" id="panel-shell">
-                <div class="card" style="margin-bottom:0">
-                    <div class="log-head">
-                        <div class="card-title">Serial Shell — ↑↓ history • on | off | kill | reset | min ult X | min sei X</div>
-                        <button class="btn btn-gray btn-sm" onclick="clearShell()">Clear</button>
-                    </div>
-                </div>
-                <div id="shellOutput"></div>
-                <div class="shell-input-row">
-                    <span class="shell-prompt">›</span>
-                    <input type="text" id="shellInput" placeholder="Type a command..." autocomplete="off" spellcheck="false"
-                        onkeydown="handleShellKey(event)">
-                    <button class="btn btn-orange" onclick="executeShellCmd()">Send</button>
-                </div>
-            </div>
-
-            <!-- ===== TAB 4: AI ===== -->
-            <div class="tab-panel" id="panel-ai">
-                <div class="ai-header">
-                    <span class="ai-title">🤖 Sarvam AI Control</span>
-                    <div style="display:flex;gap:6px">
-                        <button class="btn btn-gray btn-sm" onclick="newAISession()">New Session</button>
-                        <button class="btn btn-gray btn-sm" onclick="clearAIChat()">Clear</button>
-                    </div>
-                </div>
-
-                <div class="suggested-prompts">
-                    <button class="suggested-btn" onclick="fillAIInput('Check system status')">Check system status</button>
-                    <button class="suggested-btn" onclick="fillAIInput('Set safe thresholds')">Set safe thresholds</button>
-                    <button class="suggested-btn" onclick="fillAIInput('Activate the monitoring system')">Activate system</button>
-                    <button class="suggested-btn" onclick="fillAIInput('What are the current sensor readings?')">Current readings</button>
-                    <button class="suggested-btn" onclick="fillAIInput('Set ultrasonic to 150cm and seismic to 80')">Set thresholds</button>
-                </div>
-
-                <div id="aiChat"></div>
-
-                <div class="ai-input-row">
-                    <textarea id="aiInput" rows="2" placeholder="Ask the AI to control the monitor... (Enter to send, Shift+Enter for newline)"
-                        onkeydown="handleAIKey(event)"></textarea>
-                    <button class="btn btn-orange" onclick="sendAIMessage(document.getElementById('aiInput').value.trim())">Send</button>
-                </div>
-            </div>
-
-            <!-- ===== TAB 0: INTRO / CONTACT ===== -->
-            <div class="tab-panel" id="panel-intro">
-                <div class="intro-wrap">
-
-                    <!-- Hero -->
-                    <div class="intro-hero">
-                        <div class="intro-eyebrow">
-                            <span class="intro-dot"></span>
-                            <span>Volcano Eruption Monitor</span>
-                            <span class="intro-ver">v5.0</span>
-                        </div>
-                        <h1 class="intro-title">
-                            <span class="intro-word" style="--d:0ms">Real&#8209;time</span>
-                            <span class="intro-word" style="--d:80ms">Eruption</span>
-                            <span class="intro-word intro-accent" style="--d:160ms">Intelligence.</span>
-                        </h1>
-                        <p class="intro-sub">
-                            A dual-sensor monitoring platform for Arduino-based<br class="intro-br">
-                            volcanic activity detection — with AI command control.
-                        </p>
-                        <button class="intro-cta" onclick="switchTabByName('connection')">
-                            Open Monitor <span class="intro-arrow">→</span>
-                        </button>
-                    </div>
-
-                    <div class="intro-rule"></div>
-
-                    <!-- Features -->
-                    <div class="intro-section-label">Features</div>
-                    <div class="feat-grid">
-                        <div class="feat-card" style="--fi:0">
-                            <div class="feat-icon">◎</div>
-                            <div class="feat-name">Dual Sensor</div>
-                            <div class="feat-desc">Simultaneous ultrasonic distance and seismic ADC monitoring with independent alert thresholds.</div>
-                        </div>
-                        <div class="feat-card" style="--fi:1">
-                            <div class="feat-icon">⟁</div>
-                            <div class="feat-name">Live Graphs</div>
-                            <div class="feat-desc">120-point rolling charts update in real time via Web Serial API at 500 ms intervals.</div>
-                        </div>
-                        <div class="feat-card" style="--fi:2">
-                            <div class="feat-icon">⌖</div>
-                            <div class="feat-name">AI Control</div>
-                            <div class="feat-desc">Natural language commands via Sarvam AI. Describe actions in plain English — the AI executes them.</div>
-                        </div>
-                        <div class="feat-card" style="--fi:3">
-                            <div class="feat-icon">◻</div>
-                            <div class="feat-name">Serial Shell</div>
-                            <div class="feat-desc">Full terminal with command history, tab-completion, and syntax validation before sending.</div>
-                        </div>
-                        <div class="feat-card" style="--fi:4">
-                            <div class="feat-icon">↓</div>
-                            <div class="feat-name">Data Export</div>
-                            <div class="feat-desc">Auto-log every reading. Export as CSV or JSON with timestamps, sensor values, and alert flags.</div>
-                        </div>
-                        <div class="feat-card" style="--fi:5">
-                            <div class="feat-icon">◈</div>
-                            <div class="feat-name">Alarm System</div>
-                            <div class="feat-desc">Audio beeps and visual flash overlays on threshold breach — dual alert escalates to 1.4 kHz tone.</div>
+                    <div class="card">
+                        <div class="card-title">Appearance</div>
+                        <div class="theme-grp">
+                            <button class="theme-opt active" id="themeBtn-dark"  onclick="setTheme('dark')">🌑 Dark</button>
+                            <button class="theme-opt"        id="themeBtn-light" onclick="setTheme('light')">☀️ Light</button>
                         </div>
                     </div>
 
-                    <div class="intro-rule"></div>
-
-                    <!-- Stack -->
-                    <div class="intro-section-label">Stack</div>
-                    <div class="stack-row">
-                        <div class="stack-pill">Web Serial API</div>
-                        <div class="stack-pill">Chart.js</div>
-                        <div class="stack-pill">Web Audio API</div>
-                        <div class="stack-pill">Sarvam AI</div>
-                        <div class="stack-pill">Vanilla JS</div>
-                        <div class="stack-pill">localStorage</div>
-                        <div class="stack-pill">Chrome / Edge 89+</div>
+                    <div class="card">
+                        <div class="card-title">Alarm thresholds — pushed to database via POST</div>
+                        <div class="sg-row">
+                            <span class="sg-label">Ultrasonic MIN</span>
+                            <input type="number" class="inp inp-num" id="ultraThreshInput" value="100" min="0" max="520">
+                            <span style="font-size:11px;color:var(--text3)">cm</span>
+                            <button class="btn btn-orange btn-sm" onclick="sendThreshUltra()">→ Push</button>
+                            <button class="btn btn-ghost  btn-sm" onclick="saveThreshLocal()">Save local</button>
+                        </div>
+                        <div class="sg-row">
+                            <span class="sg-label">Seismic MIN</span>
+                            <input type="number" class="inp inp-num" id="seisThreshInput" value="50" min="0" max="1023">
+                            <span style="font-size:11px;color:var(--text3)">raw</span>
+                            <button class="btn btn-orange btn-sm" onclick="sendThreshSeis()">→ Push</button>
+                            <button class="btn btn-ghost  btn-sm" onclick="saveThreshLocal()">Save local</button>
+                        </div>
                     </div>
 
-                    <div class="intro-rule"></div>
-
-                    <!-- Contact -->
-                    <div class="intro-section-label">Contact</div>
-                    <div class="contact-block">
-                        <div class="contact-left">
-                            <div class="contact-name">Vedansh Jain</div>
-                            <div class="contact-role">Creative Technologist &amp; Hardware Engineer</div>
-                            <p class="contact-bio">
-                                Building tools at the intersection of embedded systems, data visualization,
-                                and AI-assisted interfaces. This monitor was designed for researchers
-                                and field engineers who need reliable, fast, and scriptable volcano
-                                activity detection.
-                            </p>
+                    <div class="card">
+                        <div class="card-title">System commands — POST to database</div>
+                        <div class="cmd-row">
+                            <button class="btn btn-green"  onclick="sendCommand('on')">▶ ON</button>
+                            <button class="btn btn-ghost"  onclick="sendCommand('off')">■ OFF</button>
+                            <button class="btn btn-red"    onclick="sendCommand('kill')">☠ KILL</button>
+                            <button class="btn btn-blue"   onclick="sendCommand('reset')">↺ RESET</button>
+                            <button class="btn btn-ghost"  onclick="sendCommand('456')">⚡ TEST</button>
                         </div>
-                        <div class="contact-links">
-                            <a class="contact-link" href="mailto:vedansh@example.com">
-                                <span class="cl-icon">✉</span>
-                                <span>vedansh@example.com</span>
-                                <span class="cl-arr">↗</span>
-                            </a>
-                            <a class="contact-link" href="https://github.com/" target="_blank" rel="noopener">
-                                <span class="cl-icon">⌥</span>
-                                <span>github.com/vedansh</span>
-                                <span class="cl-arr">↗</span>
-                            </a>
-                            <a class="contact-link" href="https://linkedin.com/" target="_blank" rel="noopener">
-                                <span class="cl-icon">◈</span>
-                                <span>linkedin.com/in/vedansh</span>
-                                <span class="cl-arr">↗</span>
-                            </a>
-                            <div class="contact-avail">
-                                <span class="avail-dot"></span>
-                                Available for collaboration
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Sarvam AI</div>
+                        <div class="sg-row">
+                            <span class="sg-label">API Key</span>
+                            <div class="key-wrap">
+                                <input type="password" class="inp inp-wide" id="apiKeyInput" placeholder="sk_…">
+                                <button class="key-eye" onclick="toggleKeyVis()">👁</button>
                             </div>
                         </div>
+                        <div class="sg-row">
+                            <span class="sg-label">Model</span>
+                            <select class="inp" id="modelSelect">
+                                <option value="sarvam-105b">sarvam-105b</option>
+                                <option value="sarvam-m">sarvam-m</option>
+                            </select>
+                        </div>
+                        <div class="sg-row">
+                            <button class="btn btn-orange" onclick="saveAISettings()">Save</button>
+                            <span id="aiSaveMsg" style="font-size:11px;color:var(--green);display:none">✔ Saved</span>
+                        </div>
                     </div>
 
-                    <div class="intro-footer">
-                        <span>© 2026 Vedansh Jain</span>
-                        <span class="intro-footer-sep">·</span>
-                        <span>Volcano Eruption Monitor v5.0</span>
-                        <span class="intro-footer-sep">·</span>
+                    <div class="card">
+                        <div class="card-title">Data logging</div>
+                        <label class="cb-row" style="margin-bottom:10px">
+                            <input type="checkbox" id="autoLogCheck" checked onchange="state.autoLog=this.checked;saveSettings()">
+                            Auto-log every poll
+                        </label>
+                        <div style="font-size:11px;color:var(--text2);margin-bottom:10px" id="logStats">0 entries</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button class="btn btn-blue btn-sm" onclick="downloadCSV()">Download CSV</button>
+                            <button class="btn btn-blue btn-sm" onclick="downloadJSON_()">Download JSON</button>
+                            <button class="btn btn-red  btn-sm" onclick="clearHistory()">Clear history</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========== SHELL ========== -->
+            <div class="tab-panel" id="panel-shell">
+                <div class="pad">
+                    <div class="card" style="margin-bottom:6px">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                            <div class="card-title" style="margin:0">Command shell — POSTs to database</div>
+                            <button class="btn btn-ghost btn-sm" onclick="clearShell()">Clear</button>
+                        </div>
+                    </div>
+                    <div id="shellOutput"></div>
+                    <div class="shell-row">
+                        <span class="sh-prompt">›</span>
+                        <input type="text" id="shellInput" autocomplete="off" spellcheck="false"
+                            placeholder="on | off | kill | reset | min ult 120 | min sei 80"
+                            onkeydown="handleShellKey(event)">
+                        <button class="btn btn-orange" onclick="executeShellCmd()">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== AI ========== -->
+            <div class="tab-panel" id="panel-ai">
+                <div class="pad" style="max-width:800px;display:flex;flex-direction:column;height:100%;">
+                    <div class="ai-hdr">
+                        <span class="ai-title">🤖 Sarvam AI Control</span>
+                        <div style="display:flex;gap:6px">
+                            <button class="btn btn-ghost btn-sm" onclick="newAISession()">New session</button>
+                            <button class="btn btn-ghost btn-sm" onclick="clearAIChat()">Clear</button>
+                        </div>
+                    </div>
+                    <div class="pills">
+                        <button class="pill" onclick="fillAI('Check current system status')">System status</button>
+                        <button class="pill" onclick="fillAI('Set safe thresholds for monitoring')">Safe thresholds</button>
+                        <button class="pill" onclick="fillAI('Activate the monitoring system')">Activate</button>
+                        <button class="pill" onclick="fillAI('What are the latest sensor readings?')">Readings</button>
+                        <button class="pill" onclick="fillAI('Set ultrasonic to 150cm and seismic to 80')">Custom thresholds</button>
+                    </div>
+                    <div id="aiChat" style="flex:1;min-height:0;height:calc(100vh - 270px);overflow-y:auto;margin-bottom:10px;"></div>
+                    <div class="ai-input-row" style="flex-shrink:0">
+                        <textarea id="aiInput" rows="2" placeholder="Ask the AI to control the system… (Enter = send, Shift+Enter = newline)" onkeydown="handleAIKey(event)"></textarea>
+                        <button class="btn btn-orange" onclick="doSendAI()">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== ABOUT / INTRO ========== -->
+            <div class="tab-panel" id="panel-intro">
+                <div class="pad intro-wrap">
+
+                    <div class="intro-eyebrow">
+                        <span class="e-dot"></span>
+                        <span>Volcano Eruption Monitor</span>
+                        <span class="e-ver">v5.0</span>
+                    </div>
+
+                    <h1 class="intro-h1">
+                        <span class="iw" style="--d:0ms">Real&#8209;time</span>
+                        <span class="iw" style="--d:80ms">Eruption</span>
+                        <span class="iw ia" style="--d:160ms">Intelligence.</span>
+                    </h1>
+
+                    <p class="intro-sub">
+                        A cloud-connected dashboard that pulls live dual-sensor data from a Vercel database every second.<br>
+                        Ultrasonic distance + seismic ADC monitoring — with AI command control.
+                    </p>
+
+                    <button class="intro-cta" onclick="switchTabByName('live')">
+                        Open Live View <span class="intro-arrow">→</span>
+                    </button>
+
+                    <div class="intro-rule"></div>
+                    <div class="sec-label">Features</div>
+
+                    <div class="feat-grid">
+                        <div class="feat-cell" style="--i:0"><div class="fi">◎</div><div class="fn">Live Database</div><div class="fd">Polls Vercel API every second with smart JSON key aliasing for any field format.</div></div>
+                        <div class="feat-cell" style="--i:1"><div class="fi">⟁</div><div class="fn">Dual Graphs</div><div class="fd">120-point rolling charts for ultrasonic and seismic with live threshold lines.</div></div>
+                        <div class="feat-cell" style="--i:2"><div class="fi">⌖</div><div class="fn">AI Control</div><div class="fd">Natural language via Sarvam AI. Commands in replies auto-POST to the database.</div></div>
+                        <div class="feat-cell" style="--i:3"><div class="fi">◻</div><div class="fn">Command Shell</div><div class="fd">Terminal with ↑↓ history, Tab completion, and direct POST to database endpoint.</div></div>
+                        <div class="feat-cell" style="--i:4"><div class="fi">↓</div><div class="fn">CSV / JSON Export</div><div class="fd">Auto-logs every poll. Download full history as CSV or JSON with one click.</div></div>
+                        <div class="feat-cell" style="--i:5"><div class="fi">◈</div><div class="fn">Alert System</div><div class="fd">Visual flash overlay and audio beeps on breach. Dual alert escalates to 1.4 kHz.</div></div>
+                    </div>
+
+                    <div class="intro-rule"></div>
+                    <div class="sec-label">Stack</div>
+                    <div class="stack-pills">
+                        <div class="sp">Vercel API</div><div class="sp">Chart.js</div>
+                        <div class="sp">Web Audio API</div><div class="sp">Sarvam AI</div>
+                        <div class="sp">Vanilla JS</div><div class="sp">localStorage</div>
+                        <div class="sp">DM Mono · DM Serif</div>
+                    </div>
+
+                    <div class="intro-rule"></div>
+                    <div class="sec-label">Contact</div>
+
+                    <div class="contact-grid">
+                        <div>
+                            <div class="cn">Vedansh Jain</div>
+                            <div class="cr">Creative Technologist &amp; Hardware Engineer</div>
+                            <p class="cb">Building at the intersection of embedded systems, data visualization, and AI interfaces. This monitor was designed for researchers and field engineers who need reliable, cloud-connected volcanic activity detection.</p>
+                        </div>
+                        <div class="cl-links">
+                            <a class="cl-link" href="mailto:vedansh@example.com"><span class="cl-icon">✉</span><span>vedansh@example.com</span><span class="cl-arr">↗</span></a>
+                            <a class="cl-link" href="https://github.com/" target="_blank"><span class="cl-icon">⌥</span><span>github.com/vedansh</span><span class="cl-arr">↗</span></a>
+                            <a class="cl-link" href="https://linkedin.com/" target="_blank"><span class="cl-icon">◈</span><span>linkedin.com/in/vedansh</span><span class="cl-arr">↗</span></a>
+                            <div class="avail-row"><span class="avail-dot"></span>Available for collaboration</div>
+                        </div>
+                    </div>
+
+                    <div class="intro-foot">
+                        <span>© 2026 Vedansh Jain</span><span style="opacity:.4">·</span>
+                        <span>Volcano Eruption Monitor v5.0</span><span style="opacity:.4">·</span>
                         <span>MIT License</span>
                     </div>
-
                 </div>
             </div>
 
@@ -1084,969 +576,515 @@
     </div>
 
     <script>
-    // ===================================================================
-    // STATE
-    // ===================================================================
+    // ================================================================
+    // CONSTANTS & STATE
+    // ================================================================
+    const API_URL = 'https://volcano-monitor-g4hl.vercel.app/api/volcano';
+
     const state = {
-        connected: false,
-        port: null,
-        reader: null,
-        writer: null,
-        readerRunning: false,
-
-        // Sensor data
-        distance: 0,
-        seismic: 0,
-        distAlert: false,
-        seisAlert: false,
-        dualAlert: false,
-
-        // System state
-        systemActive: false,
-        killMode: false,
-
-        // Thresholds
-        minUltrasonic: 100,
-        minSeismic: 50,
-
-        // Data history
-        distanceHistory: Array(240).fill(0),
-        seismicHistory: Array(240).fill(0),
-
-        // Logs
-        dataLog: [],
-        csvLog: [],
-
-        // AI
-        aiHistory: [],
-        apiKey: '',
-        aiModel: 'sarvam-105b',
-
-        // Settings
-        theme: 'dark',
-        autoLog: true,
-        logEnabled: true
+        distance:0, seismic:0,
+        distAlert:false, seisAlert:false, dualAlert:false,
+        systemActive:false, killMode:false,
+        minUltrasonic:100, minSeismic:50,
+        distHistory: Array(240).fill(null),
+        seisHistory:  Array(240).fill(null),
+        csvLog:[], autoLog:true,
+        aiHistory:[], apiKey:'', aiModel:'sarvam-105b',
+        theme:'dark'
     };
 
-    let serialBuffer = '';
-    let alarmInterval = null;
-    let audioCtx = null;
-    let graphPoints = 120;
-    let graphLive = true;
-    let graphOffset = 0;
+    let pollInterval=null, pollActive=false, pollCount=0;
+    let alarmInterval=null, audioCtx=null;
+    let graphPoints=120;
+    let cmdLockUntil=0; // epoch ms — while Date.now() < cmdLockUntil, ignore sys/kill/thresh from DB
+    let ultraChart, seisChart;
+    let shellHistory=[], shellHistoryIdx=-1;
 
-    // Shell history
-    let shellHistory = [];
-    let shellHistoryIdx = -1;
-
-    // ===================================================================
+    // ================================================================
     // INIT
-    // ===================================================================
+    // ================================================================
     document.addEventListener('DOMContentLoaded', () => {
         loadSettings();
         applyTheme();
         initCharts();
+        initShell();
         updateClock();
         setInterval(updateClock, 1000);
-        setInterval(updateLogStats, 3000);
-        initShell();
-        applyStateToUI();
-
-        // Set intro tab active by default
+        setInterval(() => { document.getElementById('logStats').textContent = state.csvLog.length + ' entries'; }, 2000);
         switchTabByName('intro');
-
-        // Mobile detection
-        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            document.getElementById('mobileBanner').style.display = 'block';
-        }
-        if (!navigator.serial) {
-            document.getElementById('mobileBanner').style.display = 'block';
-            document.getElementById('mobileBanner').textContent =
-                '⚠ Web Serial API not supported in this browser. Use Chrome or Edge 89+.';
-        }
+        startPolling();
     });
 
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clockEl').textContent =
-            now.toTimeString().slice(0,8);
-    }
+    const ts = () => new Date().toTimeString().slice(0,8);
+    function updateClock(){ document.getElementById('clockEl').textContent = new Date().toTimeString().slice(0,8); }
 
-    function timestamp() {
-        return new Date().toTimeString().slice(0,8);
-    }
-
-    // ===================================================================
-    // LOCAL STORAGE
-    // ===================================================================
-    function saveSettings() {
-        localStorage.setItem('volcanoSettings', JSON.stringify({
-            minUltrasonic: state.minUltrasonic,
-            minSeismic: state.minSeismic,
-            apiKey: state.apiKey,
-            aiModel: state.aiModel,
-            theme: state.theme,
-            autoLog: state.autoLog
-        }));
-    }
-
-    function loadSettings() {
-        const saved = localStorage.getItem('volcanoSettings');
-        if (saved) {
-            try {
-                const s = JSON.parse(saved);
-                Object.assign(state, s);
-            } catch(e) {}
-        }
-        // Apply to inputs
-        document.getElementById('ultraThreshInput').value = state.minUltrasonic;
-        document.getElementById('seisThreshInput').value = state.minSeismic;
-        document.getElementById('apiKeyInput').value = state.apiKey;
-        document.getElementById('modelSelect').value = state.aiModel;
-        document.getElementById('autoLogCheck').checked = state.autoLog;
-    }
-
-    function saveThreshLocal() {
-        state.minUltrasonic = parseInt(document.getElementById('ultraThreshInput').value) || 100;
-        state.minSeismic = parseInt(document.getElementById('seisThreshInput').value) || 50;
-        saveSettings();
-        updateThresholdUI();
-        addLogEntry(`[${timestamp()}] ⚙ Thresholds saved locally (ultra=${state.minUltrasonic}, seis=${state.minSeismic})`);
-    }
-
-    function saveAISettings() {
-        state.apiKey = document.getElementById('apiKeyInput').value.trim();
-        state.aiModel = document.getElementById('modelSelect').value;
-        saveSettings();
-        const msg = document.getElementById('aiSaveMsg');
-        msg.style.display = 'inline';
-        setTimeout(() => msg.style.display = 'none', 2000);
-    }
-
-    // ===================================================================
-    // THEME
-    // ===================================================================
-    function setTheme(t) {
-        state.theme = t;
-        applyTheme();
-        saveSettings();
-    }
-
-    function applyTheme() {
-        document.body.classList.toggle('light', state.theme === 'light');
-        document.getElementById('themeBtn-dark').classList.toggle('active', state.theme === 'dark');
-        document.getElementById('themeBtn-light').classList.toggle('active', state.theme === 'light');
-    }
-
-    // ===================================================================
+    // ================================================================
     // TABS
-    // ===================================================================
-    function switchTab(name) {
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('panel-' + name).classList.add('active');
-        if (event && event.target) event.target.classList.add('active');
+    // ================================================================
+    function switchTab(name){
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.getElementById('panel-'+name).classList.add('active');
+        if(window.event && window.event.target) window.event.target.classList.add('active');
     }
-
-    function switchTabByName(name) {
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('panel-' + name).classList.add('active');
-        // Activate the matching tab button
-        document.querySelectorAll('.tab-btn').forEach(b => {
-            if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + name + "'")) {
-                b.classList.add('active');
-            }
+    function switchTabByName(name){
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.getElementById('panel-'+name).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(b=>{
+            if((b.getAttribute('onclick')||'').includes("'"+name+"'")) b.classList.add('active');
         });
     }
 
-    // ===================================================================
-    // SERIAL CONNECTION
-    // ===================================================================
-    async function toggleConnection() {
-        if (state.connected) {
-            await disconnectSerial();
-        } else {
-            await connectSerial();
+    // ================================================================
+    // POLLING — GET from database every 1 s
+    // ================================================================
+    function startPolling(){
+        if(pollInterval) return;
+        pollActive=true;
+        setDot('connecting');
+        document.getElementById('liveLabel').textContent='Connecting…';
+        document.getElementById('pauseBtn').textContent='Pause';
+        poll();
+        pollInterval=setInterval(poll,1000);
+    }
+    function stopPolling(){
+        clearInterval(pollInterval); pollInterval=null; pollActive=false;
+        setDot('off');
+        document.getElementById('liveLabel').textContent='Paused';
+        document.getElementById('pauseBtn').textContent='Resume';
+    }
+    function togglePolling(){ pollActive ? stopPolling() : startPolling(); }
+
+    async function poll(){
+        try{
+            const res=await fetch(API_URL,{cache:'no-store',headers:{Accept:'application/json'}});
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            const json=await res.json();
+            pollCount++;
+            document.getElementById('pollCount').textContent='Poll #'+pollCount;
+            document.getElementById('apiLastTs').textContent=ts();
+            document.getElementById('apiErrMsg').textContent='';
+            setDot('on');
+            document.getElementById('liveLabel').textContent='Live';
+            ingest(json);
+        }catch(err){
+            setDot('err');
+            document.getElementById('liveLabel').textContent='Error';
+            document.getElementById('apiErrMsg').textContent=err.message;
+            addLog(`[${ts()}] ✖ ${err.message}`,'e');
         }
     }
 
-    async function connectSerial() {
-        if (!navigator.serial) {
-            alert('Web Serial API not supported. Use Chrome or Edge 89+.');
-            return;
-        }
-        try {
-            state.port = await navigator.serial.requestPort();
-            await state.port.open({ baudRate: 9600 });
+    function setDot(s){
+        const d=document.getElementById('liveDot');
+        const a=document.getElementById('apiDot');
+        const cls='live-dot'+(s==='on'?' on':s==='err'?' err':'');
+        d.className=cls; if(a) a.className=cls;
+    }
 
-            // Writer
-            const textEncoder = new TextEncoderStream();
-            textEncoder.readable.pipeTo(state.port.writable);
-            state.writer = textEncoder.writable.getWriter();
+    // ================================================================
+    // INGEST — parse any JSON shape from Vercel
+    // ================================================================
+    function bool(v){ if(v===undefined||v===null) return false; if(typeof v==='boolean') return v; return v===1||v==='1'||v==='true'; }
 
-            state.connected = true;
-            updateConnUI(true);
-            addLogEntry(`[${timestamp()}] ✔ Connected to serial port`);
-            shellLog(`[${timestamp()}] ✔ Serial connection established`);
+    function ingest(raw){
+        const d=raw.data||raw;
 
-            // Start reading
-            readSerialData();
+        const dist  = parseFloat(d.distance??d.dist??d.distance_cm??d.ultrasonic??state.distance);
+        const seis  = parseInt(  d.seismic??d.seis??d.seismic_raw??d.seismic_adc??state.seismic);
+        const dA    = bool(d.dist_alert??d.distAlert??d.distance_alert??state.distAlert);
+        const sA    = bool(d.seis_alert??d.seisAlert??d.seismic_alert??state.seisAlert);
+        const duA   = bool(d.dual_alert??d.dualAlert??state.dualAlert);
+        const kill  = bool(d.kill_state??d.killState??d.kill??state.killMode);
+        const sysOn = bool(d.sys_state??d.sysState??d.systemActive??d.sys_on??state.systemActive);
+        const minU  = parseFloat(d.min_ultra??d.minUltrasonic??d.min_ult??state.minUltrasonic);
+        const minS  = parseInt(  d.min_seis??d.minSeismic??d.min_sei??state.minSeismic);
 
-        } catch(err) {
-            if (err.name !== 'NotFoundError') {
-                addLogEntry(`[${timestamp()}] ✖ Connection error: ${err.message}`, true);
+        if(isNaN(dist)||isNaN(seis)) return;
+
+        // Sensor readings always update
+        state.distance=dist; state.seismic=seis;
+        state.distAlert=dA;  state.seisAlert=sA; state.dualAlert=duA;
+
+        // Command lock: don't let DB overwrite sys/kill/thresh for 5 s after a command
+        const locked = Date.now() < cmdLockUntil;
+        if(!locked){
+            state.killMode=kill; state.systemActive=sysOn;
+            if(minU!==state.minUltrasonic||minS!==state.minSeismic){
+                state.minUltrasonic=minU; state.minSeismic=minS; updateThresholdUI();
             }
         }
+
+        // Push to rolling buffers
+        state.distHistory.push(dist); state.distHistory.shift();
+        state.seisHistory.push(seis); state.seisHistory.shift();
+
+        updateSensorUI();
+        updateSystemUI();
+        updateCharts();
+        if(state.autoLog) pushLog();
+
+        const alert=dA||sA||duA;
+        addLog(`[${ts()}] dist=${dist.toFixed(1)}cm seis=${seis} da=${+dA} sa=${+sA} dual=${+duA} kill=${+kill} sys=${+sysOn}`, alert?'e':'');
+        alert ? triggerAlarm() : stopAlarm();
+
+        // Show raw snapshot
+        document.getElementById('rawJson').textContent=JSON.stringify(d,null,2);
     }
 
-    async function disconnectSerial() {
-        try {
-            state.connected = false;
-            state.readerRunning = false;
-            if (state.reader) { try { await state.reader.cancel(); } catch(e){} state.reader = null; }
-            if (state.writer) { try { state.writer.releaseLock(); } catch(e){} state.writer = null; }
-            if (state.port) { try { await state.port.close(); } catch(e){} state.port = null; }
-        } catch(e){}
-        updateConnUI(false);
-        addLogEntry(`[${timestamp()}] Disconnected`);
-        shellLog(`[${timestamp()}] Disconnected`);
-    }
-
-    function updateConnUI(connected) {
-        const dot = document.getElementById('connDot');
-        const label = document.getElementById('connLabel');
-        const btn = document.getElementById('connectBtn');
-        const btn2 = document.getElementById('connectBtn2');
-        const s1 = document.getElementById('connStatus');
-        const s2 = document.getElementById('connStatus2');
-
-        dot.classList.toggle('connected', connected);
-        label.textContent = connected ? 'Connected' : 'Disconnected';
-        label.style.color = connected ? 'var(--green)' : 'var(--text2)';
-        btn.textContent = connected ? 'Disconnect' : 'Connect to COM Port';
-        btn.classList.toggle('connected', connected);
-        btn2.textContent = connected ? 'Disconnect' : 'Connect';
-        s1.textContent = connected ? '● Connected' : 'Not connected';
-        s2.textContent = connected ? '● Connected' : '● Disconnected';
-        s1.style.color = connected ? 'var(--green)' : 'var(--text2)';
-        s2.style.color = connected ? 'var(--green)' : 'var(--text2)';
-    }
-
-    // ===================================================================
-    // SERIAL READING
-    // ===================================================================
-    async function readSerialData() {
-        state.readerRunning = true;
-        try {
-            const textDecoder = new TextDecoderStream();
-            state.port.readable.pipeTo(textDecoder.writable);
-            const reader = textDecoder.readable.getReader();
-            state.reader = reader;
-
-            while (state.connected && state.readerRunning) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                serialBuffer += value;
-                const lines = serialBuffer.split('\n');
-                serialBuffer = lines.pop();
-                for (const line of lines) {
-                    if (line.trim()) parseSerialLine(line.trim());
-                }
-            }
-        } catch(err) {
-            if (state.connected) {
-                addLogEntry(`[${timestamp()}] ✖ Read error: ${err.message}`, true);
-                await disconnectSerial();
-            }
-        }
-    }
-
-    function parseSerialLine(line) {
-        const parts = line.split(',');
-        if (parts.length !== 9) {
-            addLogEntry(`[${timestamp()}] ← (unknown) ${line}`);
-            return;
-        }
-        try {
-            state.distance   = parseFloat(parts[0]);
-            state.seismic    = parseInt(parts[1]);
-            state.distAlert  = parts[2] === '1';
-            state.seisAlert  = parts[3] === '1';
-            state.dualAlert  = parts[4] === '1';
-            state.killMode   = parts[5] === '1';
-            state.systemActive = parts[6] === '1';
-            const minUltra = parseFloat(parts[7]);
-            const minSeis  = parseInt(parts[8]);
-
-            if (minUltra !== state.minUltrasonic || minSeis !== state.minSeismic) {
-                state.minUltrasonic = minUltra;
-                state.minSeismic    = minSeis;
-                updateThresholdUI();
-            }
-
-            updateGraphs();
-            updateSensorDisplay();
-            if (state.autoLog) logData();
-
-            const entry = `[${timestamp()}] ← dist=${state.distance.toFixed(1)}cm seis=${state.seismic} ` +
-                          `da=${parts[2]} sa=${parts[3]} dual=${parts[4]} kill=${parts[5]} sys=${parts[6]}`;
-            const isAlert = state.distAlert || state.seisAlert || state.dualAlert;
-            addLogEntry(entry, isAlert);
-
-            if (isAlert) triggerAlarm(); else stopAlarm();
-            updateSystemUI();
-
-        } catch(e) {
-            addLogEntry(`[${timestamp()}] ← (parse error) ${line}`, true);
-        }
-    }
-
-    // ===================================================================
-    // SEND COMMANDS
-    // ===================================================================
-    async function sendCommand(command) {
-        if (!state.connected || !state.writer) {
-            const msg = `[${timestamp()}] ✖ Not connected`;
-            addLogEntry(msg, true);
-            shellLog(msg, 'err');
-            return false;
-        }
-        try {
-            await state.writer.write(command + '\n');
-            applyCommandState(command);
-            const entry = `[${timestamp()}] → ${command}`;
-            addLogEntry(entry);
-            shellLog(`[${timestamp()}] › ${command}`, 'cmd');
-            shellLog(`[${timestamp()}] ✔ ${command} → sys=${state.systemActive?1:0} (${state.systemActive?'ACTIVE':'INACTIVE'}) kill=${state.killMode?1:0}`, 'ok');
+    // ================================================================
+    // POST COMMANDS to database
+    // ================================================================
+    async function sendCommand(cmd){
+        const c=cmd.trim();
+        shellLog(`[${ts()}] › ${c}`,'sh-cmd');
+        try{
+            const res=await fetch(API_URL,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({command:c})
+            });
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            cmdLockUntil = Date.now() + 5000; // lock DB state overwrite for 5 s
+            shellLog(`[${ts()}] ✔ Sent: ${c}`,'sh-ok');
+            shellLog(`[${ts()}] ⏳ DB sync paused 5 s (let Arduino update)`,'sh-dim');
+            addLog(`[${ts()}] ↑ ${c}`);
+            applyLocalCmd(c);
             return true;
-        } catch(err) {
-            const msg = `[${timestamp()}] ✖ Send error: ${err.message}`;
-            addLogEntry(msg, true);
-            shellLog(msg, 'err');
+        }catch(err){
+            shellLog(`[${ts()}] ✖ ${err.message}`,'sh-err');
+            addLog(`[${ts()}] ✖ POST failed: ${err.message}`,'e');
             return false;
         }
     }
 
-    function applyCommandState(cmd) {
-        const c = cmd.trim().toLowerCase();
-        if (c === 'on')    { state.systemActive = true;  state.killMode = false; }
-        else if (c === 'off')   { state.systemActive = false; }
-        else if (c === 'kill')  { state.killMode = !state.killMode; }
-        else if (c === 'reset') { state.systemActive = true; state.killMode = false; }
-        else if (c.startsWith('min ult ')) { state.minUltrasonic = parseFloat(c.split(' ')[2]) || state.minUltrasonic; updateThresholdUI(); }
-        else if (c.startsWith('min sei ')) { state.minSeismic    = parseFloat(c.split(' ')[2]) || state.minSeismic;    updateThresholdUI(); }
+    function applyLocalCmd(cmd){
+        const c=cmd.toLowerCase();
+        if(c==='on')              { state.systemActive=true;  state.killMode=false; }
+        else if(c==='off')        { state.systemActive=false; }
+        else if(c==='kill')       { state.killMode=!state.killMode; }
+        else if(c==='reset')      { state.systemActive=true; state.killMode=false; }
+        else if(c.startsWith('min ult ')){ state.minUltrasonic=parseFloat(c.split(' ')[2])||state.minUltrasonic; updateThresholdUI(); }
+        else if(c.startsWith('min sei ')){ state.minSeismic   =parseFloat(c.split(' ')[2])||state.minSeismic;    updateThresholdUI(); }
         updateSystemUI();
     }
 
-    async function sendThreshUltra() {
-        const v = parseInt(document.getElementById('ultraThreshInput').value) || 100;
-        state.minUltrasonic = v;
-        updateThresholdUI();
-        saveSettings();
-        await sendCommand(`min ult ${v}`);
-    }
+    async function sendThreshUltra(){ const v=parseInt(document.getElementById('ultraThreshInput').value)||100; state.minUltrasonic=v; updateThresholdUI(); saveSettings(); await sendCommand('min ult '+v); }
+    async function sendThreshSeis() { const v=parseInt(document.getElementById('seisThreshInput').value)||50;  state.minSeismic=v;    updateThresholdUI(); saveSettings(); await sendCommand('min sei '+v); }
 
-    async function sendThreshSeis() {
-        const v = parseInt(document.getElementById('seisThreshInput').value) || 50;
-        state.minSeismic = v;
-        updateThresholdUI();
-        saveSettings();
-        await sendCommand(`min sei ${v}`);
-    }
-
-    // ===================================================================
+    // ================================================================
     // UI UPDATES
-    // ===================================================================
-    function updateSensorDisplay() {
-        document.getElementById('ultraVal').textContent = state.distance.toFixed(1) + ' cm';
-        document.getElementById('seisVal').textContent  = state.seismic + ' raw';
+    // ================================================================
+    function updateSensorUI(){
+        document.getElementById('ultraVal').textContent=state.distance.toFixed(1);
+        document.getElementById('seisVal').textContent=state.seismic;
 
-        const uCard = document.getElementById('ultraCard');
-        const sCard = document.getElementById('seisCard');
-        const uStat = document.getElementById('ultraStatus');
-        const sStat = document.getElementById('seisStatus');
+        const uC=document.getElementById('ultraCard'), sC=document.getElementById('seisCard');
+        uC.classList.toggle('alerting',state.distAlert);
+        sC.classList.toggle('alerting',state.seisAlert);
 
-        uCard.classList.toggle('alerting', state.distAlert);
-        sCard.classList.toggle('alerting', state.seisAlert);
+        const uS=document.getElementById('ultraStatus'), sS=document.getElementById('seisStatus');
+        uS.textContent=state.distAlert?'⚠ ALERT':'✔ OK'; uS.className='sc-status '+(state.distAlert?'alert':'ok');
+        sS.textContent=state.seisAlert?'⚠ ALERT':'✔ OK'; sS.className='sc-status '+(state.seisAlert?'alert':'ok');
 
-        uStat.textContent = state.distAlert ? '⚠ ALERT' : '✔ OK';
-        uStat.className = 'sensor-status ' + (state.distAlert ? 'alert' : 'ok');
-        sStat.textContent = state.seisAlert ? '⚠ ALERT' : '✔ OK';
-        sStat.className = 'sensor-status ' + (state.seisAlert ? 'alert' : 'ok');
+        document.getElementById('ultraThreshDisp').textContent='Threshold '+state.minUltrasonic+' cm';
+        document.getElementById('seisThreshDisp').textContent='Threshold '+state.minSeismic;
 
-        // Progress bars
-        const ultraPct = Math.min(100, Math.round((state.distance / state.minUltrasonic) * 100));
-        const seisPct  = Math.min(100, Math.round((state.seismic  / state.minSeismic)    * 100));
-
-        const uBar = document.getElementById('ultraBar');
-        const sBar = document.getElementById('seisBar');
-        uBar.style.width = ultraPct + '%';
-        sBar.style.width = seisPct  + '%';
-        uBar.classList.toggle('danger', state.distAlert);
-        sBar.classList.toggle('danger', state.seisAlert);
-        document.getElementById('ultraPct').textContent = ultraPct + '%';
-        document.getElementById('seisPct').textContent  = seisPct  + '%';
+        const uP=Math.min(100,Math.round(state.distance/state.minUltrasonic*100));
+        const sP=Math.min(100,Math.round(state.seismic /state.minSeismic   *100));
+        const uBar=document.getElementById('ultraBar'), sBar=document.getElementById('seisBar');
+        uBar.style.width=uP+'%'; uBar.className='prog-fill u'+(state.distAlert?' danger':'');
+        sBar.style.width=sP+'%'; sBar.className='prog-fill s'+(state.seisAlert?' danger':'');
+        document.getElementById('ultraPct').textContent=uP+'%';
+        document.getElementById('seisPct').textContent=sP+'%';
     }
 
-    function updateSystemUI() {
-        const sysBadge  = document.getElementById('sysBadge');
-        const killBadge = document.getElementById('killBadge');
-        sysBadge.textContent  = 'SYS: ' + (state.systemActive ? 'ON' : 'OFF');
-        sysBadge.className    = 'sys-badge' + (state.systemActive ? ' active' : '');
-        killBadge.textContent = 'KILL: ' + (state.killMode ? 'ON' : 'OFF');
-        killBadge.className   = 'sys-badge' + (state.killMode ? ' kill' : '');
+    function updateSystemUI(){
+        const sb=document.getElementById('sysBadge'),  kb=document.getElementById('killBadge');
+        sb.textContent='SYS: '+(state.systemActive?'ON':'OFF'); sb.className='badge'+(state.systemActive?' on':'');
+        kb.textContent='KILL: '+(state.killMode?'ON':'OFF');    kb.className='badge'+(state.killMode?' kill':'');
 
-        const alertEl  = document.getElementById('alertMsg');
-        const statusBar = document.getElementById('statusBar');
-        const overlay   = document.getElementById('alertOverlay');
-
-        if (state.dualAlert) {
-            alertEl.textContent = '⚠ DUAL ALERT';
-            statusBar.className = 'alert-dual';
-            overlay.style.display = 'block';
-        } else if (state.distAlert) {
-            alertEl.textContent = '⚠ DIST ALERT';
-            statusBar.className = 'alert-dist';
-            overlay.style.display = 'none';
-        } else if (state.seisAlert) {
-            alertEl.textContent = '⚠ SEIS ALERT';
-            statusBar.className = 'alert-seis';
-            overlay.style.display = 'none';
-        } else {
-            alertEl.textContent = '';
-            statusBar.className = '';
-            overlay.style.display = 'none';
-        }
+        const ab=document.getElementById('alertBadge'), bar=document.getElementById('statusBar'), ov=document.getElementById('alertOverlay');
+        if(state.dualAlert){      ab.textContent='⚠ DUAL ALERT'; bar.className='alert-dual'; ov.style.display='block'; }
+        else if(state.distAlert){ ab.textContent='⚠ DIST ALERT'; bar.className='alert-dist'; ov.style.display='none'; }
+        else if(state.seisAlert){ ab.textContent='⚠ SEIS ALERT'; bar.className='alert-seis'; ov.style.display='none'; }
+        else{                     ab.textContent='';              bar.className='';            ov.style.display='none'; }
     }
 
-    function updateThresholdUI() {
-        document.getElementById('ultraThreshInput').value = state.minUltrasonic;
-        document.getElementById('seisThreshInput').value  = state.minSeismic;
-        document.getElementById('ultraThreshLabel').textContent = `Threshold: ${state.minUltrasonic}cm`;
-        document.getElementById('seisThreshLabel').textContent  = `Threshold: ${state.minSeismic}`;
-
-        // Update chart threshold lines
-        if (ultraChart) {
-            ultraChart.data.datasets[1].data = Array(graphPoints).fill(state.minUltrasonic);
-            ultraChart.update('none');
-        }
-        if (seisChart) {
-            seisChart.data.datasets[1].data = Array(graphPoints).fill(state.minSeismic);
-            seisChart.update('none');
-        }
+    function updateThresholdUI(){
+        document.getElementById('ultraThreshInput').value=state.minUltrasonic;
+        document.getElementById('seisThreshInput').value=state.minSeismic;
+        document.getElementById('ultraThreshLabel').textContent='Threshold: '+state.minUltrasonic+' cm';
+        document.getElementById('seisThreshLabel').textContent='Threshold: '+state.minSeismic;
+        if(ultraChart){ ultraChart.data.datasets[1].data=Array(graphPoints).fill(state.minUltrasonic); ultraChart.update('none'); }
+        if(seisChart){  seisChart.data.datasets[1].data=Array(graphPoints).fill(state.minSeismic);    seisChart.update('none'); }
     }
 
-    function applyStateToUI() {
-        updateConnUI(false);
-        updateThresholdUI();
-        updateSystemUI();
-    }
-
-    function updateLogStats() {
-        document.getElementById('logStats').textContent = `${state.csvLog.length} entries logged`;
-    }
-
-    // ===================================================================
+    // ================================================================
     // CHARTS
-    // ===================================================================
-    let ultraChart, seisChart;
-
-    function initCharts() {
-        Chart.defaults.color = '#666';
-        Chart.defaults.borderColor = '#1e1e1e';
-
-        const commonOpts = {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 0 },
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false }, tooltip: { enabled: true } },
-            scales: {
-                x: { display: false },
-                y: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: '#1a1a1a' } }
-            }
+    // ================================================================
+    function initCharts(){
+        Chart.defaults.color='#444'; Chart.defaults.borderColor='#1c1c1c';
+        const base={
+            responsive:true, maintainAspectRatio:false,
+            animation:{duration:0},
+            plugins:{legend:{display:false},tooltip:{enabled:true}},
+            scales:{x:{display:false},y:{ticks:{color:'#3a3a3a',font:{size:10}},grid:{color:'#111'}}}
         };
-
-        ultraChart = new Chart(document.getElementById('ultraChart'), {
-            type: 'line',
-            data: {
-                labels: Array(graphPoints).fill(''),
-                datasets: [{
-                    label: 'Distance (cm)',
-                    data: Array(graphPoints).fill(0),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.08)',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Threshold',
-                    data: Array(graphPoints).fill(state.minUltrasonic),
-                    borderColor: '#ef4444',
-                    borderDash: [4, 4],
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0
-                }]
-            },
-            options: { ...commonOpts, scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, min: 0, max: 520 } } }
+        ultraChart=new Chart(document.getElementById('ultraChart'),{
+            type:'line',
+            data:{labels:Array(graphPoints).fill(''),datasets:[
+                {label:'Distance',data:Array(graphPoints).fill(null),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.07)',borderWidth:1.5,pointRadius:0,tension:.4,fill:true,spanGaps:false},
+                {label:'Threshold',data:Array(graphPoints).fill(state.minUltrasonic),borderColor:'rgba(239,68,68,.55)',borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false,tension:0}
+            ]},
+            options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0,max:520}}}
         });
-
-        seisChart = new Chart(document.getElementById('seisChart'), {
-            type: 'line',
-            data: {
-                labels: Array(graphPoints).fill(''),
-                datasets: [{
-                    label: 'Seismic (raw)',
-                    data: Array(graphPoints).fill(0),
-                    borderColor: '#f97316',
-                    backgroundColor: 'rgba(249,115,22,0.08)',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Threshold',
-                    data: Array(graphPoints).fill(state.minSeismic),
-                    borderColor: '#ef4444',
-                    borderDash: [4, 4],
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0
-                }]
-            },
-            options: { ...commonOpts, scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, min: 0, max: 1023 } } }
+        seisChart=new Chart(document.getElementById('seisChart'),{
+            type:'line',
+            data:{labels:Array(graphPoints).fill(''),datasets:[
+                {label:'Seismic',data:Array(graphPoints).fill(null),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',borderWidth:1.5,pointRadius:0,tension:.4,fill:true,spanGaps:false},
+                {label:'Threshold',data:Array(graphPoints).fill(state.minSeismic),borderColor:'rgba(239,68,68,.55)',borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false,tension:0}
+            ]},
+            options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0,max:1023}}}
         });
     }
 
-    function updateGraphs() {
-        // Push to history buffers
-        state.distanceHistory.push(state.distance);
-        state.seismicHistory.push(state.seismic);
-        if (state.distanceHistory.length > 1000) state.distanceHistory.shift();
-        if (state.seismicHistory.length > 1000) state.seismicHistory.shift();
-
-        if (!graphLive) return; // paused
-
-        const uSlice = state.distanceHistory.slice(-graphPoints);
-        const sSlice = state.seismicHistory.slice(-graphPoints);
-
-        ultraChart.data.labels = Array(uSlice.length).fill('');
-        ultraChart.data.datasets[0].data = uSlice;
-        ultraChart.data.datasets[1].data = Array(uSlice.length).fill(state.minUltrasonic);
+    function updateCharts(){
+        const u=state.distHistory.slice(-graphPoints), s=state.seisHistory.slice(-graphPoints);
+        ultraChart.data.labels=Array(u.length).fill('');
+        ultraChart.data.datasets[0].data=u;
+        ultraChart.data.datasets[1].data=Array(u.length).fill(state.minUltrasonic);
         ultraChart.update('none');
-
-        seisChart.data.labels = Array(sSlice.length).fill('');
-        seisChart.data.datasets[0].data = sSlice;
-        seisChart.data.datasets[1].data = Array(sSlice.length).fill(state.minSeismic);
+        seisChart.data.labels=Array(s.length).fill('');
+        seisChart.data.datasets[0].data=s;
+        seisChart.data.datasets[1].data=Array(s.length).fill(state.minSeismic);
         seisChart.update('none');
     }
 
-    function setZoom(pts) {
-        document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-
-        if (pts === 'live') {
-            graphLive = true;
-            graphPoints = 120;
-        } else {
-            graphLive = true;
-            graphPoints = pts;
-        }
-        updateGraphs();
+    function setZoom(e,pts){
+        document.querySelectorAll('.zoom-btn').forEach(b=>b.classList.remove('active'));
+        e.target.classList.add('active');
+        graphPoints=pts; updateCharts();
     }
 
-    // ===================================================================
+    // ================================================================
     // DATA LOG
-    // ===================================================================
-    const MAX_LOG = 500;
-
-    function addLogEntry(text, isAlert = false) {
-        const log = document.getElementById('dataLog');
-        const el = document.createElement('div');
-        el.className = 'log-entry' + (isAlert ? ' log-alert' : '');
-        el.textContent = text;
+    // ================================================================
+    function addLog(txt,cls=''){
+        const log=document.getElementById('dataLog');
+        const el=document.createElement('div');
+        el.className='ll '+cls; el.textContent=txt;
         log.appendChild(el);
+        while(log.children.length>500) log.removeChild(log.firstChild);
+        log.scrollTop=log.scrollHeight;
+    }
+    function clearLog(){ document.getElementById('dataLog').innerHTML=''; }
 
-        // Trim
-        while (log.children.length > MAX_LOG) log.removeChild(log.firstChild);
-        log.scrollTop = log.scrollHeight;
+    function pushLog(){
+        state.csvLog.push({timestamp:new Date().toISOString(),distance:state.distance.toFixed(2),seismic:state.seismic,distAlert:+state.distAlert,seisAlert:+state.seisAlert,dualAlert:+state.dualAlert,kill:+state.killMode,systemOn:+state.systemActive,minUltra:state.minUltrasonic,minSeis:state.minSeismic});
+        if(state.csvLog.length>10000) state.csvLog.shift();
     }
 
-    function clearLog() {
-        document.getElementById('dataLog').innerHTML = '';
+    function downloadCSV(){
+        if(!state.csvLog.length){alert('No data yet.');return;}
+        const h='timestamp,dist_cm,seismic,dist_alert,seis_alert,dual_alert,kill,sys_on,min_ultra,min_seis\n';
+        dl(new Blob([h+state.csvLog.map(e=>Object.values(e).join(',')).join('\n')],{type:'text/csv'}),'volcano_'+today()+'.csv');
     }
-
-    function logData() {
-        state.csvLog.push({
-            timestamp: new Date().toISOString(),
-            distance: state.distance.toFixed(2),
-            seismic: state.seismic,
-            distAlert: state.distAlert ? 1 : 0,
-            seisAlert: state.seisAlert ? 1 : 0,
-            dualAlert: state.dualAlert ? 1 : 0,
-            kill: state.killMode ? 1 : 0,
-            systemOn: state.systemActive ? 1 : 0,
-            minUltra: state.minUltrasonic,
-            minSeis: state.minSeismic
-        });
-        if (state.csvLog.length > 10000) state.csvLog.shift();
+    function downloadJSON_(){
+        if(!state.csvLog.length){alert('No data yet.');return;}
+        dl(new Blob([JSON.stringify(state.csvLog,null,2)],{type:'application/json'}),'volcano_'+today()+'.json');
     }
+    function dl(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+    function today(){ return new Date().toISOString().split('T')[0]; }
+    function clearHistory(){ if(confirm('Clear all logged data?')){state.csvLog=[];addLog(`[${ts()}] History cleared`,'d');} }
 
-    function downloadCSV() {
-        if (!state.csvLog.length) { alert('No data to export'); return; }
-        const headers = 'timestamp,dist_cm,seismic,dist_alert,seis_alert,dual_alert,kill,sys_on,min_ultra,min_seis\n';
-        const rows = state.csvLog.map(e =>
-            `${e.timestamp},${e.distance},${e.seismic},${e.distAlert},${e.seisAlert},${e.dualAlert},${e.kill},${e.systemOn},${e.minUltra},${e.minSeis}`
-        ).join('\n');
-        const blob = new Blob([headers + rows], { type: 'text/csv' });
-        triggerDownload(blob, `volcano_${new Date().toISOString().split('T')[0]}.csv`);
-    }
-
-    function downloadJSON() {
-        if (!state.csvLog.length) { alert('No data to export'); return; }
-        const blob = new Blob([JSON.stringify(state.csvLog, null, 2)], { type: 'application/json' });
-        triggerDownload(blob, `volcano_${new Date().toISOString().split('T')[0]}.json`);
-    }
-
-    function triggerDownload(blob, filename) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = filename; a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    function clearHistory() {
-        if (!confirm('Clear all logged data?')) return;
-        state.csvLog = [];
-        updateLogStats();
-        addLogEntry(`[${timestamp()}] ⚙ Data log cleared`);
-    }
-
-    // ===================================================================
+    // ================================================================
     // ALARM
-    // ===================================================================
-    function triggerAlarm() {
-        if (alarmInterval) return;
-        alarmInterval = setInterval(playBeep, 700);
+    // ================================================================
+    function triggerAlarm(){ if(alarmInterval)return; alarmInterval=setInterval(beep,700); }
+    function stopAlarm(){ if(alarmInterval){clearInterval(alarmInterval);alarmInterval=null;} }
+    function beep(){
+        try{
+            if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+            const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            o.frequency.value=state.dualAlert?1400:1000; o.type='sine';
+            g.gain.setValueAtTime(.2,audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.2);
+            o.start(); o.stop(audioCtx.currentTime+.22);
+        }catch(e){}
     }
 
-    function stopAlarm() {
-        if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+    // ================================================================
+    // SETTINGS / STORAGE
+    // ================================================================
+    function saveSettings(){
+        localStorage.setItem('volc5',JSON.stringify({
+            minUltrasonic:state.minUltrasonic, minSeismic:state.minSeismic,
+            apiKey:state.apiKey, aiModel:state.aiModel,
+            theme:state.theme, autoLog:state.autoLog
+        }));
     }
-
-    function playBeep() {
-        try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.value = state.dualAlert ? 1400 : 1000;
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-            osc.start(audioCtx.currentTime);
-            osc.stop(audioCtx.currentTime + 0.25);
-        } catch(e){}
+    function loadSettings(){
+        const s=localStorage.getItem('volc5');
+        if(s) try{Object.assign(state,JSON.parse(s));}catch(e){}
+        document.getElementById('ultraThreshInput').value=state.minUltrasonic;
+        document.getElementById('seisThreshInput').value=state.minSeismic;
+        document.getElementById('apiKeyInput').value=state.apiKey;
+        document.getElementById('modelSelect').value=state.aiModel;
+        document.getElementById('autoLogCheck').checked=state.autoLog;
     }
+    function saveThreshLocal(){
+        state.minUltrasonic=parseInt(document.getElementById('ultraThreshInput').value)||100;
+        state.minSeismic   =parseInt(document.getElementById('seisThreshInput').value)||50;
+        saveSettings(); updateThresholdUI();
+        addLog(`[${ts()}] ⚙ Thresholds saved locally`,'d');
+    }
+    function saveAISettings(){
+        state.apiKey=document.getElementById('apiKeyInput').value.trim();
+        state.aiModel=document.getElementById('modelSelect').value;
+        saveSettings();
+        const m=document.getElementById('aiSaveMsg');
+        m.style.display='inline'; setTimeout(()=>m.style.display='none',2000);
+    }
+    function setTheme(t){ state.theme=t; applyTheme(); saveSettings(); }
+    function applyTheme(){
+        document.body.classList.toggle('light',state.theme==='light');
+        document.getElementById('themeBtn-dark').classList.toggle('active',state.theme==='dark');
+        document.getElementById('themeBtn-light').classList.toggle('active',state.theme==='light');
+    }
+    function toggleKeyVis(){ const i=document.getElementById('apiKeyInput'); i.type=i.type==='password'?'text':'password'; }
 
-    // ===================================================================
+    // ================================================================
     // SHELL
-    // ===================================================================
-    function initShell() {
-        const out = document.getElementById('shellOutput');
-        const t = timestamp();
-        shellLog(`[${t}] Volcano Eruption Monitor Shell v5.0`, 'info');
-        shellLog(`[${t}] Commands: on | off | kill | reset | 456`, 'info');
-        shellLog(`[${t}] Thresholds: min ult <cm> | min sei <raw>`, 'info');
-        shellLog(`[${t}] Type 'help' for all commands`, 'info');
+    // ================================================================
+    const VALID=['on','off','kill','reset','456'];
+    function initShell(){
+        shellLog(`[${ts()}] Volcano Monitor Shell — commands POST to database`,'sh-dim');
+        shellLog(`[${ts()}] on | off | kill | reset | min ult <n> | min sei <n> | status | clear`,'sh-dim');
     }
-
-    function shellLog(text, type = '') {
-        const out = document.getElementById('shellOutput');
-        const el = document.createElement('div');
-        el.className = 'shell-line ' + (type === 'cmd' ? 'shell-cmd' : type === 'ok' ? 'shell-ok' : type === 'err' ? 'shell-err' : 'shell-info');
-        el.textContent = text;
-        out.appendChild(el);
-        while (out.children.length > 500) out.removeChild(out.firstChild);
-        out.scrollTop = out.scrollHeight;
+    function shellLog(txt,cls=''){
+        const o=document.getElementById('shellOutput');
+        const d=document.createElement('div'); d.className='sh-l '+cls; d.textContent=txt;
+        o.appendChild(d);
+        while(o.children.length>500) o.removeChild(o.firstChild);
+        o.scrollTop=o.scrollHeight;
     }
+    function clearShell(){ document.getElementById('shellOutput').innerHTML=''; initShell(); }
 
-    function clearShell() {
-        document.getElementById('shellOutput').innerHTML = '';
-        initShell();
+    function handleShellKey(e){
+        if(e.key==='Enter'){e.preventDefault();executeShellCmd();}
+        else if(e.key==='ArrowUp'){e.preventDefault();histNav(1);}
+        else if(e.key==='ArrowDown'){e.preventDefault();histNav(-1);}
+        else if(e.key==='Tab'){e.preventDefault();tabComplete();}
     }
-
-    function handleShellKey(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            executeShellCmd();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (shellHistoryIdx < shellHistory.length - 1) {
-                shellHistoryIdx++;
-                document.getElementById('shellInput').value = shellHistory[shellHistory.length - 1 - shellHistoryIdx];
-            }
-        } else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (shellHistoryIdx > 0) {
-                shellHistoryIdx--;
-                document.getElementById('shellInput').value = shellHistory[shellHistory.length - 1 - shellHistoryIdx];
-            } else {
-                shellHistoryIdx = -1;
-                document.getElementById('shellInput').value = '';
-            }
-        } else if (e.key === 'Tab') {
-            e.preventDefault();
-            tabCompleteShell();
-        }
+    function histNav(dir){
+        const i=document.getElementById('shellInput');
+        shellHistoryIdx=Math.max(-1,Math.min(shellHistory.length-1,shellHistoryIdx+dir));
+        i.value=shellHistoryIdx>=0?shellHistory[shellHistory.length-1-shellHistoryIdx]:'';
     }
-
-    const SHELL_CMDS = ['on', 'off', 'kill', 'reset', '456', 'help', 'clear', 'status', 'min ult ', 'min sei '];
-
-    function tabCompleteShell() {
-        const inp = document.getElementById('shellInput');
-        const val = inp.value;
-        const match = SHELL_CMDS.find(c => c.startsWith(val));
-        if (match) inp.value = match;
+    function tabComplete(){
+        const i=document.getElementById('shellInput'); const v=i.value;
+        const all=[...VALID,'min ult ','min sei ','help','clear','status'];
+        const m=all.find(c=>c.startsWith(v)); if(m) i.value=m;
     }
-
-    async function executeShellCmd() {
-        const inp = document.getElementById('shellInput');
-        const cmd = inp.value.trim();
-        if (!cmd) return;
-
-        shellHistoryIdx = -1;
-        shellHistory.push(cmd);
-        if (shellHistory.length > 100) shellHistory.shift();
-        inp.value = '';
-
-        shellLog(`[${timestamp()}] › ${cmd}`, 'cmd');
-
-        // Built-in shell commands
-        const c = cmd.toLowerCase();
-        if (c === 'help') {
-            shellLog('Commands: on | off | kill | reset | 456 | min ult <n> | min sei <n> | status | clear', 'info');
+    async function executeShellCmd(){
+        const i=document.getElementById('shellInput'); const cmd=i.value.trim(); if(!cmd) return;
+        i.value=''; shellHistoryIdx=-1; shellHistory.push(cmd); if(shellHistory.length>100) shellHistory.shift();
+        const c=cmd.toLowerCase();
+        if(c==='help'){shellLog('on | off | kill | reset | 456 | min ult <n> | min sei <n> | status | clear','sh-dim');return;}
+        if(c==='clear'){clearShell();return;}
+        if(c==='status'){
+            shellLog(`sys=${state.systemActive} kill=${state.killMode} dist=${state.distance.toFixed(1)}cm seis=${state.seismic}`,'sh-dim');
+            shellLog(`ultra_thresh=${state.minUltrasonic} seis_thresh=${state.minSeismic}`,'sh-dim');
             return;
         }
-        if (c === 'clear') { clearShell(); return; }
-        if (c === 'status') {
-            shellLog(`Connected: ${state.connected} | Sys: ${state.systemActive} | Kill: ${state.killMode}`, 'info');
-            shellLog(`Dist: ${state.distance.toFixed(1)}cm | Seis: ${state.seismic} | Ultra thresh: ${state.minUltrasonic} | Seis thresh: ${state.minSeismic}`, 'info');
-            return;
-        }
-
-        // Validate
-        const validCmds = ['on','off','kill','reset','456'];
-        const isThresh = /^min (ult|sei) \d+(\.\d+)?$/.test(c);
-        if (!validCmds.includes(c) && !isThresh) {
-            shellLog(`[${timestamp()}] ✖ Unknown command: ${cmd}`, 'err');
-            return;
-        }
-
+        const isThresh=/^min (ult|sei) \d+(\.\d+)?$/.test(c);
+        if(!VALID.includes(c)&&!isThresh){shellLog(`[${ts()}] ✖ Unknown: ${cmd}`,'sh-err');return;}
         await sendCommand(cmd);
     }
 
-    // ===================================================================
-    // AI INTEGRATION (Sarvam)
-    // ===================================================================
-    function fillAIInput(text) {
-        document.getElementById('aiInput').value = text;
-        document.getElementById('aiInput').focus();
-    }
+    // ================================================================
+    // AI (SARVAM)
+    // ================================================================
+    function fillAI(t){ document.getElementById('aiInput').value=t; document.getElementById('aiInput').focus(); }
+    function handleAIKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSendAI();} }
+    function doSendAI(){ const t=document.getElementById('aiInput').value.trim(); if(t) sendAIMessage(t); }
+    function newAISession(){ state.aiHistory=[]; clearAIChat(); aiSys('New session started.'); }
+    function clearAIChat(){ document.getElementById('aiChat').innerHTML=''; }
 
-    function handleAIKey(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            const txt = document.getElementById('aiInput').value.trim();
-            if (txt) sendAIMessage(txt);
-        }
-    }
-
-    function newAISession() {
-        state.aiHistory = [];
-        clearAIChat();
-        addAISystemMsg('New session started.');
-    }
-
-    function clearAIChat() {
-        document.getElementById('aiChat').innerHTML = '';
-    }
-
-    function addAISystemMsg(text) {
-        const chat = document.getElementById('aiChat');
-        const el = document.createElement('div');
-        el.className = 'ai-msg system';
-        el.textContent = text;
-        chat.appendChild(el);
-        chat.scrollTop = chat.scrollHeight;
+    function aiSys(txt){ return aiMsg('system',txt); }
+    function aiMsg(role,txt){
+        const el=document.createElement('div'); el.className='ai-msg '+role; el.textContent=txt;
+        document.getElementById('aiChat').appendChild(el);
+        document.getElementById('aiChat').scrollTop=99999;
         return el;
     }
-
-    function addUserMsg(text) {
-        const chat = document.getElementById('aiChat');
-        const el = document.createElement('div');
-        el.className = 'ai-msg user';
-        el.textContent = text;
-        chat.appendChild(el);
-        chat.scrollTop = chat.scrollHeight;
-    }
-
-    function createAIReplyEl() {
-        const chat = document.getElementById('aiChat');
-        const el = document.createElement('div');
-        el.className = 'ai-msg assistant';
-        el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
-        chat.appendChild(el);
-        chat.scrollTop = chat.scrollHeight;
+    function aiTyping(){
+        const el=document.createElement('div'); el.className='ai-msg assistant';
+        el.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+        document.getElementById('aiChat').appendChild(el);
+        document.getElementById('aiChat').scrollTop=99999;
         return el;
     }
-
-    function updateAIReplyEl(el, text) {
-        // Highlight [CMD:...] spans
-        el.innerHTML = text.replace(/\[CMD:([^\]]+)\]/g,
-            '<span style="color:var(--orange);font-weight:bold;">[CMD:$1]</span>');
-        document.getElementById('aiChat').scrollTop = 999999;
+    function renderAI(el,txt){
+        el.innerHTML=txt.replace(/\[CMD:([^\]]+)\]/g,'<span style="color:var(--orange);font-weight:500">[CMD:$1]</span>');
+        document.getElementById('aiChat').scrollTop=99999;
     }
 
-    async function sendAIMessage(userMsg) {
-        if (!userMsg) return;
+    async function sendAIMessage(userMsg){
+        const key=state.apiKey||document.getElementById('apiKeyInput').value.trim();
+        if(!key){aiSys('⚠ Set your Sarvam API key in Settings first.');return;}
+        state.apiKey=key;
+        document.getElementById('aiInput').value='';
+        aiMsg('user',userMsg);
 
-        // Check API key (prompt if missing)
-        let apiKey = state.apiKey || document.getElementById('apiKeyInput').value.trim();
-        if (!apiKey) {
-            addAISystemMsg('⚠ Please set your Sarvam API key in Settings → Sarvam AI.');
-            return;
-        }
-        state.apiKey = apiKey;
+        const sys=`You control Volcano Eruption Monitor v5.0. Data comes from Vercel cloud database.
+State: dist=${state.distance.toFixed(1)}cm | seis=${state.seismic} | sys=${state.systemActive} | kill=${state.killMode}
+Thresholds: ultra=${state.minUltrasonic}cm | seis=${state.minSeismic}
+Alerts: dist=${state.distAlert} | seis=${state.seisAlert} | dual=${state.dualAlert}
+Embed commands: [CMD:on] [CMD:off] [CMD:kill] [CMD:reset] [CMD:min ult X] [CMD:min sei X]
+Be concise and technical.`;
 
-        document.getElementById('aiInput').value = '';
-        addUserMsg(userMsg);
-
-        const systemPrompt = `You are the AI controller for Volcano Eruption Monitor v5.0.
-Connected to HC-SR04 ultrasonic + seismic sensor via Arduino.
-
-Current state:
-- Ultrasonic threshold: ${state.minUltrasonic} cm
-- Seismic threshold: ${state.minSeismic} raw
-- System active: ${state.systemActive}
-- Kill mode: ${state.killMode}
-- Connected: ${state.connected}
-- Latest readings: dist=${state.distance.toFixed(1)}cm, seis=${state.seismic}
-- Distance alert: ${state.distAlert}, Seismic alert: ${state.seisAlert}, Dual alert: ${state.dualAlert}
-
-Commands you can embed in your reply to execute:
-[CMD:on] - Activate system
-[CMD:off] - Deactivate system
-[CMD:kill] - Toggle kill mode
-[CMD:reset] - Reset to safe state
-[CMD:min ult X] - Set ultrasonic threshold to X cm
-[CMD:min sei X] - Set seismic threshold to X raw
-
-Embed commands naturally in your response. Be concise and technical.`;
-
-        const replyEl = createAIReplyEl();
-
-        try {
-            const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'API-Subscription-Key': apiKey,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: state.aiModel,
-                    max_tokens: 1000,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        ...state.aiHistory,
-                        { role: 'user', content: userMsg }
-                    ],
-                    temperature: 0.8,
-                    stream: true
-                })
+        const el=aiTyping();
+        try{
+            const res=await fetch('https://api.sarvam.ai/v1/chat/completions',{
+                method:'POST',
+                headers:{'API-Subscription-Key':key,'Content-Type':'application/json'},
+                body:JSON.stringify({model:state.aiModel,max_tokens:1000,temperature:.75,stream:true,
+                    messages:[{role:'system',content:sys},...state.aiHistory,{role:'user',content:userMsg}]})
             });
+            if(!res.ok){renderAI(el,`⚠ API ${res.status}: ${(await res.text()).slice(0,200)}`);return;}
 
-            if (!response.ok) {
-                const errText = await response.text();
-                updateAIReplyEl(replyEl, `⚠ API Error ${response.status}: ${errText.slice(0,200)}`);
-                return;
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let aiReply = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) continue;
-                    const data = line.slice(6).trim();
-                    if (data === '[DONE]') break;
-                    try {
-                        const json = JSON.parse(data);
-                        const token = json.choices?.[0]?.delta?.content || '';
-                        if (token) { aiReply += token; updateAIReplyEl(replyEl, aiReply); }
-                    } catch(e) {}
+            const reader=res.body.getReader(), dec=new TextDecoder();
+            let reply='';
+            while(true){
+                const{done,value}=await reader.read(); if(done) break;
+                for(const line of dec.decode(value).split('\n')){
+                    if(!line.startsWith('data: ')) continue;
+                    const chunk=line.slice(6).trim(); if(chunk==='[DONE]') break;
+                    try{ const tok=JSON.parse(chunk).choices?.[0]?.delta?.content||''; reply+=tok; renderAI(el,reply); }catch(e){}
                 }
             }
 
-            // Execute embedded commands
-            const cmds = aiReply.match(/\[CMD:([^\]]+)\]/g);
-            if (cmds && state.connected) {
-                for (const c of cmds) {
-                    const cmd = c.match(/\[CMD:([^\]]+)\]/)[1].trim();
-                    const ok = await sendCommand(cmd);
-                    aiReply += `\n⚡ Executed: ${cmd}${ok ? '' : ' (send failed)'}`;
-                    updateAIReplyEl(replyEl, aiReply);
-                    await new Promise(r => setTimeout(r, 500));
-                }
-            } else if (cmds && !state.connected) {
-                aiReply += '\n⚠ Commands not sent – not connected to Arduino.';
-                updateAIReplyEl(replyEl, aiReply);
-            }
+            const cmds=reply.match(/\[CMD:([^\]]+)\]/g);
+            if(cmds){ for(const c of cmds){ const cmd=c.match(/\[CMD:([^\]]+)\]/)[1].trim(); const ok=await sendCommand(cmd); reply+=`\n⚡ ${ok?'Sent':'Failed'}: ${cmd}`; renderAI(el,reply); await new Promise(r=>setTimeout(r,400)); } }
 
-            // Save history
-            state.aiHistory.push(
-                { role: 'user', content: userMsg },
-                { role: 'assistant', content: aiReply }
-            );
-            // Keep last 20 turns
-            if (state.aiHistory.length > 40) state.aiHistory.splice(0, 2);
-
-        } catch(err) {
-            updateAIReplyEl(replyEl, `⚠ Error: ${err.message}`);
-        }
+            state.aiHistory.push({role:'user',content:userMsg},{role:'assistant',content:reply});
+            if(state.aiHistory.length>40) state.aiHistory.splice(0,2);
+        }catch(err){ renderAI(el,'⚠ '+err.message); }
     }
 
-    // ===================================================================
-    // API KEY VISIBILITY TOGGLE
-    // ===================================================================
-    function toggleKeyVis() {
-        const inp = document.getElementById('apiKeyInput');
-        inp.type = inp.type === 'password' ? 'text' : 'password';
+    // ================================================================
+    // RESPONSIVE
+    // ================================================================
+    function handleResize(){
+        const g=document.querySelector('.live-grid');
+        if(g) g.style.gridTemplateColumns=window.innerWidth<740?'1fr':'270px 1fr';
     }
-
-    // ===================================================================
-    // RESPONSIVE GRAPH LAYOUT
-    // ===================================================================
-    function handleResize() {
-        if (window.innerWidth < 700) {
-            document.querySelector('.sensor-graph-grid').style.gridTemplateColumns = '1fr';
-        } else {
-            document.querySelector('.sensor-graph-grid').style.gridTemplateColumns = '1fr 2fr';
-        }
-    }
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize',handleResize);
     handleResize();
-
     </script>
 </body>
 </html>
