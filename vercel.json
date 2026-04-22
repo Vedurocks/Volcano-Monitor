@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/volcano.js": {
-      "maxDuration": 10
-    }
-  }
-}
