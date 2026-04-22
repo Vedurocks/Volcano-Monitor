@@ -1,7 +1,30 @@
 {
-  "name": "volcano-monitor",
-  "version": "1.0.0",
+  "name": "volcano-monitor-api",
+  "version": "5.0.0",
+  "description": "Volcano Eruption Monitor — Cloud database API for dual-sensor telemetry",
+  "main": "api/volcano.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "lint": "eslint api/"
+  },
   "dependencies": {
-    "@vercel/postgres": "^0.10.0"
-  }
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  },
+  "keywords": [
+    "volcano",
+    "monitor",
+    "iot",
+    "vercel",
+    "postgres",
+    "neon"
+  ],
+  "author": "Vedansh Jain",
+  "license": "MIT"
 }
