@@ -28,7 +28,7 @@
             padding:0 16px;z-index:200;font-size:11px;transition:background .25s;
         }
         #statusBar.alert-dist{background:#2a0900;border-bottom-color:var(--red);}
-        #statusBar.alert-seis{background:#1f0f00;border-bottom-color:var(--orange);}
+        #statusBar.alert-vib{background:#1f0f00;border-bottom-color:var(--orange);}
         #statusBar.alert-dual{background:#2a0000;border-bottom-color:var(--red);animation:flashBar .7s infinite;}
         @keyframes flashBar{50%{opacity:.55;}}
         .sb-left{display:flex;align-items:center;gap:10px;}
@@ -277,12 +277,13 @@
             <div class="tab-panel" id="panel-live">
                 <div class="pad live-wrap">
 
-                    <!-- API status row -->
+                    <!-- Database status row -->
                     <div class="api-bar">
-                        <span class="live-dot on" id="apiDot" style="flex-shrink:0"></span>
-                        <span class="api-endpoint" id="apiEndpoint">https://volcano-monitor-g4hl.vercel.app/api/volcano</span>
-                        <span id="apiErrMsg"></span>
-                        <span id="pollCount" style="font-size:10px;color:var(--text3);">—</span>
+                        <span class="live-dot on" id="apiDot"></span>
+                        <span style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);">Database</span>
+                        <span style="font-size:10px;color:var(--text2);">https://volcano-monitor-g4hl.vercel.app/api/volcano</span>
+                        <span id="apiErrMsg" style="font-size:10px;color:var(--red);"></span>
+                        <span id="pollCount" style="font-size:10px;color:var(--text3);margin-left:auto;">—</span>
                         <span style="font-size:10px;color:var(--text2);">Last: <span id="apiLastTs">—</span></span>
                         <button class="btn btn-ghost btn-sm" id="pauseBtn" onclick="togglePolling()">Pause</button>
                     </div>
@@ -300,12 +301,12 @@
                                     <div class="sc-status ok" id="ultraStatus">No data</div>
                                     <div class="sc-thresh" id="ultraThreshDisp">Threshold —</div>
                                 </div>
-                                <div class="sensor-card" id="seisCard" style="--c:var(--orange)">
-                                    <div class="sc-label">Seismic</div>
-                                    <div class="sc-val" id="seisVal">—</div>
-                                    <div class="sc-unit">raw ADC</div>
-                                    <div class="sc-status ok" id="seisStatus">No data</div>
-                                    <div class="sc-thresh" id="seisThreshDisp">Threshold —</div>
+                                <div class="sensor-card" id="vibCard" style="--c:var(--orange)">
+                                    <div class="sc-label">Vibration</div>
+                                    <div class="sc-val" id="vibVal">—</div>
+                                    <div class="sc-unit">raw</div>
+                                    <div class="sc-status ok" id="vibStatus">No data</div>
+                                    <div class="sc-thresh" id="vibThreshDisp">Threshold —</div>
                                 </div>
                             </div>
 
@@ -317,9 +318,9 @@
                                     <span class="prog-pct" id="ultraPct">0%</span>
                                 </div>
                                 <div class="prog-row">
-                                    <span class="prog-label">Seismic</span>
-                                    <div class="prog-track"><div class="prog-fill s" id="seisBar" style="width:0%"></div></div>
-                                    <span class="prog-pct" id="seisPct">0%</span>
+                                    <span class="prog-label">Vibration</span>
+                                    <div class="prog-track"><div class="prog-fill s" id="vibBar" style="width:0%"></div></div>
+                                    <span class="prog-pct" id="vibPct">0%</span>
                                 </div>
                             </div>
 
@@ -351,11 +352,11 @@
                                 <div class="graph-hdr">
                                     <div class="graph-hdr-l">
                                         <div class="gdot" style="background:var(--orange)"></div>
-                                        <span style="font-size:10px;color:var(--text2)">Seismic (raw ADC)</span>
+                                        <span style="font-size:10px;color:var(--text2)">Vibration (raw)</span>
                                     </div>
-                                    <span style="font-size:10px;color:var(--text3)" id="seisThreshLabel">Threshold: 50</span>
+                                    <span style="font-size:10px;color:var(--text3)" id="vibThreshLabel">Threshold: 50</span>
                                 </div>
-                                <canvas id="seisChart" height="110"></canvas>
+                                <canvas id="vibChart" height="110"></canvas>
                             </div>
                         </div>
                     </div>
@@ -398,10 +399,10 @@
                             <button class="btn btn-ghost  btn-sm" onclick="saveThreshLocal()">Save local</button>
                         </div>
                         <div class="sg-row">
-                            <span class="sg-label">Seismic MIN</span>
-                            <input type="number" class="inp inp-num" id="seisThreshInput" value="50" min="0" max="1023">
+                            <span class="sg-label">Vibration MIN</span>
+                            <input type="number" class="inp inp-num" id="vibThreshInput" value="50" min="0" max="4095">
                             <span style="font-size:11px;color:var(--text3)">raw</span>
-                            <button class="btn btn-orange btn-sm" onclick="sendThreshSeis()">→ Push</button>
+                            <button class="btn btn-orange btn-sm" onclick="sendThreshVib()">→ Push</button>
                             <button class="btn btn-ghost  btn-sm" onclick="saveThreshLocal()">Save local</button>
                         </div>
                     </div>
@@ -461,7 +462,7 @@
                 <div class="pad">
                     <div class="card" style="margin-bottom:6px">
                         <div style="display:flex;align-items:center;justify-content:space-between">
-                            <div class="card-title" style="margin:0">Command shell — POSTs to database</div>
+                            <div class="card-title" style="margin:0">Command shell — queues to database → pulled &amp; executed by EXE</div>
                             <button class="btn btn-ghost btn-sm" onclick="clearShell()">Clear</button>
                         </div>
                     </div>
@@ -469,7 +470,7 @@
                     <div class="shell-row">
                         <span class="sh-prompt">›</span>
                         <input type="text" id="shellInput" autocomplete="off" spellcheck="false"
-                            placeholder="on | off | kill | reset | min ult 120 | min sei 80"
+                            placeholder="on | off | kill | reset | min ult 120 | min vib 80"
                             onkeydown="handleShellKey(event)">
                         <button class="btn btn-orange" onclick="executeShellCmd()">Send</button>
                     </div>
@@ -491,7 +492,7 @@
                         <button class="pill" onclick="fillAI('Set safe thresholds for monitoring')">Safe thresholds</button>
                         <button class="pill" onclick="fillAI('Activate the monitoring system')">Activate</button>
                         <button class="pill" onclick="fillAI('What are the latest sensor readings?')">Readings</button>
-                        <button class="pill" onclick="fillAI('Set ultrasonic to 150cm and seismic to 80')">Custom thresholds</button>
+                        <button class="pill" onclick="fillAI('Set ultrasonic to 150cm and vibration to 80')">Custom thresholds</button>
                     </div>
                     <div id="aiChat" style="flex:1;min-height:0;height:calc(100vh - 270px);overflow-y:auto;margin-bottom:10px;"></div>
                     <div class="ai-input-row" style="flex-shrink:0">
@@ -519,7 +520,7 @@
 
                     <p class="intro-sub">
                         A cloud-connected dashboard that pulls live dual-sensor data from a Vercel database every second.<br>
-                        Ultrasonic distance + seismic ADC monitoring — with AI command control.
+                        Ultrasonic distance + vibration ADC monitoring — with AI command control.
                     </p>
 
                     <button class="intro-cta" onclick="switchTabByName('live')">
@@ -531,7 +532,7 @@
 
                     <div class="feat-grid">
                         <div class="feat-cell" style="--i:0"><div class="fi">◎</div><div class="fn">Live Database</div><div class="fd">Polls Vercel API every second with smart JSON key aliasing for any field format.</div></div>
-                        <div class="feat-cell" style="--i:1"><div class="fi">⟁</div><div class="fn">Dual Graphs</div><div class="fd">120-point rolling charts for ultrasonic and seismic with live threshold lines.</div></div>
+                        <div class="feat-cell" style="--i:1"><div class="fi">⟁</div><div class="fn">Dual Graphs</div><div class="fd">120-point rolling charts for ultrasonic and vibration with live threshold lines.</div></div>
                         <div class="feat-cell" style="--i:2"><div class="fi">⌖</div><div class="fn">AI Control</div><div class="fd">Natural language via Sarvam AI. Commands in replies auto-POST to the database.</div></div>
                         <div class="feat-cell" style="--i:3"><div class="fi">◻</div><div class="fn">Command Shell</div><div class="fd">Terminal with ↑↓ history, Tab completion, and direct POST to database endpoint.</div></div>
                         <div class="feat-cell" style="--i:4"><div class="fi">↓</div><div class="fn">CSV / JSON Export</div><div class="fd">Auto-logs every poll. Download full history as CSV or JSON with one click.</div></div>
@@ -579,15 +580,15 @@
     // ================================================================
     // CONSTANTS & STATE
     // ================================================================
-    const API_URL = 'https://volcano-monitor-g4hl.vercel.app/api/volcano';
+    const API_URL = 'https://volcano-monitor-sandy.vercel.app/api/volcano';
 
     const state = {
-        distance:0, seismic:0,
-        distAlert:false, seisAlert:false, dualAlert:false,
+        distance:0, vibration:0,
+        distAlert:false, vibAlert:false, dualAlert:false,
         systemActive:false, killMode:false,
-        minUltrasonic:100, minSeismic:50,
+        minUltrasonic:100, minVibration:50,
         distHistory: Array(240).fill(null),
-        seisHistory:  Array(240).fill(null),
+        vibHistory:  Array(240).fill(null),
         csvLog:[], autoLog:true,
         aiHistory:[], apiKey:'', aiModel:'sarvam-105b',
         theme:'dark'
@@ -596,8 +597,8 @@
     let pollInterval=null, pollActive=false, pollCount=0;
     let alarmInterval=null, audioCtx=null;
     let graphPoints=120;
-    let cmdLockUntil=0; // epoch ms — while Date.now() < cmdLockUntil, ignore sys/kill/thresh from DB
-    let ultraChart, seisChart;
+    let cmdLockUntil=0;
+    let ultraChart, vibChart;
     let shellHistory=[], shellHistoryIdx=-1;
 
     // ================================================================
@@ -677,10 +678,9 @@
     }
 
     function setDot(s){
-        const d=document.getElementById('liveDot');
-        const a=document.getElementById('apiDot');
         const cls='live-dot'+(s==='on'?' on':s==='err'?' err':'');
-        d.className=cls; if(a) a.className=cls;
+        document.getElementById('liveDot').className=cls;
+        document.getElementById('apiDot').className=cls;
     }
 
     // ================================================================
@@ -692,33 +692,33 @@
         const d=raw.data||raw;
 
         const dist  = parseFloat(d.distance??d.dist??d.distance_cm??d.ultrasonic??state.distance);
-        const seis  = parseInt(  d.seismic??d.seis??d.seismic_raw??d.seismic_adc??state.seismic);
+        const vib  = parseInt(  d.vibration??d.vib??d.vibration_raw??d.vibration_adc??state.vibration);
         const dA    = bool(d.dist_alert??d.distAlert??d.distance_alert??state.distAlert);
-        const sA    = bool(d.seis_alert??d.seisAlert??d.seismic_alert??state.seisAlert);
+        const sA    = bool(d.vib_alert??d.vibAlert??d.vibration_alert??state.vibAlert);
         const duA   = bool(d.dual_alert??d.dualAlert??state.dualAlert);
         const kill  = bool(d.kill_state??d.killState??d.kill??state.killMode);
         const sysOn = bool(d.sys_state??d.sysState??d.systemActive??d.sys_on??state.systemActive);
         const minU  = parseFloat(d.min_ultra??d.minUltrasonic??d.min_ult??state.minUltrasonic);
-        const minS  = parseInt(  d.min_seis??d.minSeismic??d.min_sei??state.minSeismic);
+        const minS  = parseInt(  d.min_vib??d.minVibration??state.minVibration);
 
-        if(isNaN(dist)||isNaN(seis)) return;
+        if(isNaN(dist)||isNaN(vib)) return;
 
         // Sensor readings always update
-        state.distance=dist; state.seismic=seis;
-        state.distAlert=dA;  state.seisAlert=sA; state.dualAlert=duA;
+        state.distance=dist; state.vibration=vib;
+        state.distAlert=dA;  state.vibAlert=sA; state.dualAlert=duA;
 
         // Command lock: don't let DB overwrite sys/kill/thresh for 5 s after a command
         const locked = Date.now() < cmdLockUntil;
         if(!locked){
             state.killMode=kill; state.systemActive=sysOn;
-            if(minU!==state.minUltrasonic||minS!==state.minSeismic){
-                state.minUltrasonic=minU; state.minSeismic=minS; updateThresholdUI();
+            if(minU!==state.minUltrasonic||minS!==state.minVibration){
+                state.minUltrasonic=minU; state.minVibration=minS; updateThresholdUI();
             }
         }
 
         // Push to rolling buffers
         state.distHistory.push(dist); state.distHistory.shift();
-        state.seisHistory.push(seis); state.seisHistory.shift();
+        state.vibHistory.push(vib); state.vibHistory.shift();
 
         updateSensorUI();
         updateSystemUI();
@@ -726,7 +726,7 @@
         if(state.autoLog) pushLog();
 
         const alert=dA||sA||duA;
-        addLog(`[${ts()}] dist=${dist.toFixed(1)}cm seis=${seis} da=${+dA} sa=${+sA} dual=${+duA} kill=${+kill} sys=${+sysOn}`, alert?'e':'');
+        addLog(`[${ts()}] dist=${dist.toFixed(1)}cm vib=${vib} da=${+dA} sa=${+sA} dual=${+duA} kill=${+kill} sys=${+sysOn}`, alert?'e':'');
         alert ? triggerAlarm() : stopAlarm();
 
         // Show raw snapshot
@@ -734,27 +734,26 @@
     }
 
     // ================================================================
-    // POST COMMANDS to database
+    // POST COMMAND → database queue (EXE polls & executes)
     // ================================================================
     async function sendCommand(cmd){
-        const c=cmd.trim();
-        shellLog(`[${ts()}] › ${c}`,'sh-cmd');
+        const c = cmd.trim();
+        shellLog(`[${ts()}] › ${c}`, 'sh-cmd');
         try{
-            const res=await fetch(API_URL,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({command:c})
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: c })
             });
-            if(!res.ok) throw new Error('HTTP '+res.status);
-            cmdLockUntil = Date.now() + 5000; // lock DB state overwrite for 5 s
-            shellLog(`[${ts()}] ✔ Sent: ${c}`,'sh-ok');
-            shellLog(`[${ts()}] ⏳ DB sync paused 5 s (let Arduino update)`,'sh-dim');
-            addLog(`[${ts()}] ↑ ${c}`);
+            if(!res.ok) throw new Error('HTTP ' + res.status);
+            shellLog(`[${ts()}] ✔ Queued → database`, 'sh-ok');
+            addLog(`[${ts()}] ↑ cmd queued: ${c}`);
+            cmdLockUntil = Date.now() + 5000;
             applyLocalCmd(c);
             return true;
-        }catch(err){
-            shellLog(`[${ts()}] ✖ ${err.message}`,'sh-err');
-            addLog(`[${ts()}] ✖ POST failed: ${err.message}`,'e');
+        } catch(err){
+            shellLog(`[${ts()}] ✖ ${err.message}`, 'sh-err');
+            addLog(`[${ts()}] ✖ POST failed: ${err.message}`, 'e');
             return false;
         }
     }
@@ -766,38 +765,38 @@
         else if(c==='kill')       { state.killMode=!state.killMode; }
         else if(c==='reset')      { state.systemActive=true; state.killMode=false; }
         else if(c.startsWith('min ult ')){ state.minUltrasonic=parseFloat(c.split(' ')[2])||state.minUltrasonic; updateThresholdUI(); }
-        else if(c.startsWith('min sei ')){ state.minSeismic   =parseFloat(c.split(' ')[2])||state.minSeismic;    updateThresholdUI(); }
+        else if(c.startsWith('min vib ')){ state.minVibration   =parseFloat(c.split(' ')[2])||state.minVibration;    updateThresholdUI(); }
         updateSystemUI();
     }
 
     async function sendThreshUltra(){ const v=parseInt(document.getElementById('ultraThreshInput').value)||100; state.minUltrasonic=v; updateThresholdUI(); saveSettings(); await sendCommand('min ult '+v); }
-    async function sendThreshSeis() { const v=parseInt(document.getElementById('seisThreshInput').value)||50;  state.minSeismic=v;    updateThresholdUI(); saveSettings(); await sendCommand('min sei '+v); }
+    async function sendThreshVib() { const v=parseInt(document.getElementById('vibThreshInput').value)||50;  state.minVibration=v;    updateThresholdUI(); saveSettings(); await sendCommand('min vib '+v); }
 
     // ================================================================
     // UI UPDATES
     // ================================================================
     function updateSensorUI(){
         document.getElementById('ultraVal').textContent=state.distance.toFixed(1);
-        document.getElementById('seisVal').textContent=state.seismic;
+        document.getElementById('vibVal').textContent=state.vibration;
 
-        const uC=document.getElementById('ultraCard'), sC=document.getElementById('seisCard');
+        const uC=document.getElementById('ultraCard'), sC=document.getElementById('vibCard');
         uC.classList.toggle('alerting',state.distAlert);
-        sC.classList.toggle('alerting',state.seisAlert);
+        sC.classList.toggle('alerting',state.vibAlert);
 
-        const uS=document.getElementById('ultraStatus'), sS=document.getElementById('seisStatus');
+        const uS=document.getElementById('ultraStatus'), sS=document.getElementById('vibStatus');
         uS.textContent=state.distAlert?'⚠ ALERT':'✔ OK'; uS.className='sc-status '+(state.distAlert?'alert':'ok');
-        sS.textContent=state.seisAlert?'⚠ ALERT':'✔ OK'; sS.className='sc-status '+(state.seisAlert?'alert':'ok');
+        sS.textContent=state.vibAlert?'⚠ ALERT':'✔ OK'; sS.className='sc-status '+(state.vibAlert?'alert':'ok');
 
         document.getElementById('ultraThreshDisp').textContent='Threshold '+state.minUltrasonic+' cm';
-        document.getElementById('seisThreshDisp').textContent='Threshold '+state.minSeismic;
+        document.getElementById('vibThreshDisp').textContent='Threshold '+state.minVibration;
 
         const uP=Math.min(100,Math.round(state.distance/state.minUltrasonic*100));
-        const sP=Math.min(100,Math.round(state.seismic /state.minSeismic   *100));
-        const uBar=document.getElementById('ultraBar'), sBar=document.getElementById('seisBar');
+        const sP=Math.min(100,Math.round(state.vibration /state.minVibration   *100));
+        const uBar=document.getElementById('ultraBar'), sBar=document.getElementById('vibBar');
         uBar.style.width=uP+'%'; uBar.className='prog-fill u'+(state.distAlert?' danger':'');
-        sBar.style.width=sP+'%'; sBar.className='prog-fill s'+(state.seisAlert?' danger':'');
+        sBar.style.width=sP+'%'; sBar.className='prog-fill s'+(state.vibAlert?' danger':'');
         document.getElementById('ultraPct').textContent=uP+'%';
-        document.getElementById('seisPct').textContent=sP+'%';
+        document.getElementById('vibPct').textContent=sP+'%';
     }
 
     function updateSystemUI(){
@@ -808,17 +807,17 @@
         const ab=document.getElementById('alertBadge'), bar=document.getElementById('statusBar'), ov=document.getElementById('alertOverlay');
         if(state.dualAlert){      ab.textContent='⚠ DUAL ALERT'; bar.className='alert-dual'; ov.style.display='block'; }
         else if(state.distAlert){ ab.textContent='⚠ DIST ALERT'; bar.className='alert-dist'; ov.style.display='none'; }
-        else if(state.seisAlert){ ab.textContent='⚠ SEIS ALERT'; bar.className='alert-seis'; ov.style.display='none'; }
+        else if(state.vibAlert){ ab.textContent='⚠ VIB ALERT'; bar.className='alert-vib'; ov.style.display='none'; }
         else{                     ab.textContent='';              bar.className='';            ov.style.display='none'; }
     }
 
     function updateThresholdUI(){
         document.getElementById('ultraThreshInput').value=state.minUltrasonic;
-        document.getElementById('seisThreshInput').value=state.minSeismic;
+        document.getElementById('vibThreshInput').value=state.minVibration;
         document.getElementById('ultraThreshLabel').textContent='Threshold: '+state.minUltrasonic+' cm';
-        document.getElementById('seisThreshLabel').textContent='Threshold: '+state.minSeismic;
+        document.getElementById('vibThreshLabel').textContent='Threshold: '+state.minVibration;
         if(ultraChart){ ultraChart.data.datasets[1].data=Array(graphPoints).fill(state.minUltrasonic); ultraChart.update('none'); }
-        if(seisChart){  seisChart.data.datasets[1].data=Array(graphPoints).fill(state.minSeismic);    seisChart.update('none'); }
+        if(vibChart){  vibChart.data.datasets[1].data=Array(graphPoints).fill(state.minVibration);    vibChart.update('none'); }
     }
 
     // ================================================================
@@ -840,26 +839,26 @@
             ]},
             options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0,max:520}}}
         });
-        seisChart=new Chart(document.getElementById('seisChart'),{
+        vibChart=new Chart(document.getElementById('vibChart'),{
             type:'line',
             data:{labels:Array(graphPoints).fill(''),datasets:[
-                {label:'Seismic',data:Array(graphPoints).fill(null),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',borderWidth:1.5,pointRadius:0,tension:.4,fill:true,spanGaps:false},
-                {label:'Threshold',data:Array(graphPoints).fill(state.minSeismic),borderColor:'rgba(239,68,68,.55)',borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false,tension:0}
+                {label:'Vibration',data:Array(graphPoints).fill(null),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',borderWidth:1.5,pointRadius:0,tension:.4,fill:true,spanGaps:false},
+                {label:'Threshold',data:Array(graphPoints).fill(state.minVibration),borderColor:'rgba(239,68,68,.55)',borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false,tension:0}
             ]},
             options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0,max:1023}}}
         });
     }
 
     function updateCharts(){
-        const u=state.distHistory.slice(-graphPoints), s=state.seisHistory.slice(-graphPoints);
+        const u=state.distHistory.slice(-graphPoints), s=state.vibHistory.slice(-graphPoints);
         ultraChart.data.labels=Array(u.length).fill('');
         ultraChart.data.datasets[0].data=u;
         ultraChart.data.datasets[1].data=Array(u.length).fill(state.minUltrasonic);
         ultraChart.update('none');
-        seisChart.data.labels=Array(s.length).fill('');
-        seisChart.data.datasets[0].data=s;
-        seisChart.data.datasets[1].data=Array(s.length).fill(state.minSeismic);
-        seisChart.update('none');
+        vibChart.data.labels=Array(s.length).fill('');
+        vibChart.data.datasets[0].data=s;
+        vibChart.data.datasets[1].data=Array(s.length).fill(state.minVibration);
+        vibChart.update('none');
     }
 
     function setZoom(e,pts){
@@ -882,13 +881,13 @@
     function clearLog(){ document.getElementById('dataLog').innerHTML=''; }
 
     function pushLog(){
-        state.csvLog.push({timestamp:new Date().toISOString(),distance:state.distance.toFixed(2),seismic:state.seismic,distAlert:+state.distAlert,seisAlert:+state.seisAlert,dualAlert:+state.dualAlert,kill:+state.killMode,systemOn:+state.systemActive,minUltra:state.minUltrasonic,minSeis:state.minSeismic});
+        state.csvLog.push({timestamp:new Date().toISOString(),distance:state.distance.toFixed(2),vibration:state.vibration,distAlert:+state.distAlert,vibAlert:+state.vibAlert,dualAlert:+state.dualAlert,kill:+state.killMode,systemOn:+state.systemActive,minUltra:state.minUltrasonic,minVib:state.minVibration});
         if(state.csvLog.length>10000) state.csvLog.shift();
     }
 
     function downloadCSV(){
         if(!state.csvLog.length){alert('No data yet.');return;}
-        const h='timestamp,dist_cm,seismic,dist_alert,seis_alert,dual_alert,kill,sys_on,min_ultra,min_seis\n';
+        const h='timestamp,dist_cm,vibration,dist_alert,vib_alert,dual_alert,kill,sys_on,min_ultra,min_vib\n';
         dl(new Blob([h+state.csvLog.map(e=>Object.values(e).join(',')).join('\n')],{type:'text/csv'}),'volcano_'+today()+'.csv');
     }
     function downloadJSON_(){
@@ -921,7 +920,7 @@
     // ================================================================
     function saveSettings(){
         localStorage.setItem('volc5',JSON.stringify({
-            minUltrasonic:state.minUltrasonic, minSeismic:state.minSeismic,
+            minUltrasonic:state.minUltrasonic, minVibration:state.minVibration,
             apiKey:state.apiKey, aiModel:state.aiModel,
             theme:state.theme, autoLog:state.autoLog
         }));
@@ -930,14 +929,14 @@
         const s=localStorage.getItem('volc5');
         if(s) try{Object.assign(state,JSON.parse(s));}catch(e){}
         document.getElementById('ultraThreshInput').value=state.minUltrasonic;
-        document.getElementById('seisThreshInput').value=state.minSeismic;
+        document.getElementById('vibThreshInput').value=state.minVibration;
         document.getElementById('apiKeyInput').value=state.apiKey;
         document.getElementById('modelSelect').value=state.aiModel;
         document.getElementById('autoLogCheck').checked=state.autoLog;
     }
     function saveThreshLocal(){
         state.minUltrasonic=parseInt(document.getElementById('ultraThreshInput').value)||100;
-        state.minSeismic   =parseInt(document.getElementById('seisThreshInput').value)||50;
+        state.minVibration   =parseInt(document.getElementById('vibThreshInput').value)||50;
         saveSettings(); updateThresholdUI();
         addLog(`[${ts()}] ⚙ Thresholds saved locally`,'d');
     }
@@ -961,8 +960,9 @@
     // ================================================================
     const VALID=['on','off','kill','reset','456'];
     function initShell(){
-        shellLog(`[${ts()}] Volcano Monitor Shell — commands POST to database`,'sh-dim');
-        shellLog(`[${ts()}] on | off | kill | reset | min ult <n> | min sei <n> | status | clear`,'sh-dim');
+        shellLog(`[${ts()}] Volcano Monitor Shell`,'sh-dim');
+        shellLog(`[${ts()}] Commands are queued in database and pulled by the EXE`,'sh-dim');
+        shellLog(`[${ts()}] on | off | kill | reset | min ult <n> | min vib <n> | status | clear`,'sh-dim');
     }
     function shellLog(txt,cls=''){
         const o=document.getElementById('shellOutput');
@@ -986,21 +986,21 @@
     }
     function tabComplete(){
         const i=document.getElementById('shellInput'); const v=i.value;
-        const all=[...VALID,'min ult ','min sei ','help','clear','status'];
+        const all=[...VALID,'min ult ','min vib ','help','clear','status'];
         const m=all.find(c=>c.startsWith(v)); if(m) i.value=m;
     }
     async function executeShellCmd(){
         const i=document.getElementById('shellInput'); const cmd=i.value.trim(); if(!cmd) return;
         i.value=''; shellHistoryIdx=-1; shellHistory.push(cmd); if(shellHistory.length>100) shellHistory.shift();
         const c=cmd.toLowerCase();
-        if(c==='help'){shellLog('on | off | kill | reset | 456 | min ult <n> | min sei <n> | status | clear','sh-dim');return;}
+        if(c==='help'){shellLog('on | off | kill | reset | 456 | min ult <n> | min vib <n> | status | clear','sh-dim');return;}
         if(c==='clear'){clearShell();return;}
         if(c==='status'){
-            shellLog(`sys=${state.systemActive} kill=${state.killMode} dist=${state.distance.toFixed(1)}cm seis=${state.seismic}`,'sh-dim');
-            shellLog(`ultra_thresh=${state.minUltrasonic} seis_thresh=${state.minSeismic}`,'sh-dim');
+            shellLog(`sys=${state.systemActive} kill=${state.killMode} dist=${state.distance.toFixed(1)}cm vib=${state.vibration}`,'sh-dim');
+            shellLog(`ultra_thresh=${state.minUltrasonic} vib_thresh=${state.minVibration}`,'sh-dim');
             return;
         }
-        const isThresh=/^min (ult|sei) \d+(\.\d+)?$/.test(c);
+        const isThresh=/^min (ult|vib) \d+(\.\d+)?$/.test(c);
         if(!VALID.includes(c)&&!isThresh){shellLog(`[${ts()}] ✖ Unknown: ${cmd}`,'sh-err');return;}
         await sendCommand(cmd);
     }
@@ -1041,10 +1041,10 @@
         aiMsg('user',userMsg);
 
         const sys=`You control Volcano Eruption Monitor v5.0. Data comes from Vercel cloud database.
-State: dist=${state.distance.toFixed(1)}cm | seis=${state.seismic} | sys=${state.systemActive} | kill=${state.killMode}
-Thresholds: ultra=${state.minUltrasonic}cm | seis=${state.minSeismic}
-Alerts: dist=${state.distAlert} | seis=${state.seisAlert} | dual=${state.dualAlert}
-Embed commands: [CMD:on] [CMD:off] [CMD:kill] [CMD:reset] [CMD:min ult X] [CMD:min sei X]
+State: dist=${state.distance.toFixed(1)}cm | vib=${state.vibration} | sys=${state.systemActive} | kill=${state.killMode}
+Thresholds: ultra=${state.minUltrasonic}cm | vib=${state.minVibration}
+Alerts: dist=${state.distAlert} | vib=${state.vibAlert} | dual=${state.dualAlert}
+Embed commands: [CMD:on] [CMD:off] [CMD:kill] [CMD:reset] [CMD:min ult X] [CMD:min vib X]
 Be concise and technical.`;
 
         const el=aiTyping();
