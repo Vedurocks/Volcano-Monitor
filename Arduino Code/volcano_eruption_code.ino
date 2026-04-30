@@ -9,7 +9,7 @@ const int VIBRATION = 5;  // Vibration sensor (digital pin)
 
 // OUTPUTS - all digital pins
 const int LED = 10;       // LED on digital pin
-const int BUZZER = 13;    // Buzzer on digital pin (built-in LED pin)
+const int BUZZER = 7;    // Buzzer on digital pin (built-in LED pin)
 
 // THRESHOLDS
 float MIN_ULTRASONIC = 10.0;    // cm
