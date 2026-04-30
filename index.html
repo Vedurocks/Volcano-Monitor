@@ -478,7 +478,7 @@
                             <button class="btn" onclick="sendCommand('off')">■ OFF</button>
                             <button class="btn btn-red" onclick="sendCommand('kill')">☠ KILL</button>
                             <button class="btn btn-blue" onclick="sendCommand('reset')">↺ RESET</button>
-                            <button class="btn" onclick="sendCommand('456')">⚡ TEST</button>
+                            <button class="btn" onclick="sendCommand('test')">⚡ TEST</button>
                         </div>
                     </div>
 
@@ -1053,7 +1053,7 @@
     // ================================================================
     // SHELL
     // ================================================================
-    const VALID = ['on', 'off', 'kill', 'reset', '456'];
+    const VALID = ['on', 'off', 'kill', 'reset', 'test'];
     function initShell() {
         shellLog(`[${ts()}] VM-5 TERMINAL`, 'sh-dim');
         shellLog(`[${ts()}] COMMANDS QUEUED TO DATABASE`, 'sh-dim');
@@ -1088,7 +1088,7 @@
         const i = document.getElementById('shellInput'); const cmd = i.value.trim(); if (!cmd) return;
         i.value = ''; shellHistoryIdx = -1; shellHistory.push(cmd); if (shellHistory.length > 100) shellHistory.shift();
         const c = cmd.toLowerCase();
-        if (c === 'help') { shellLog('ON | OFF | KILL | RESET | 456 | MIN ULT <N> | MIN VIB <N> | STATUS | CLEAR', 'sh-dim'); return; }
+        if (c === 'help') { shellLog('ON | OFF | KILL | RESET | test | MIN ULT <N> | MIN VIB <N> | STATUS | CLEAR', 'sh-dim'); return; }
         if (c === 'clear') { clearShell(); return; }
         if (c === 'status') {
             shellLog(`SYS=${state.systemActive} KILL=${state.killMode} D=${state.distance.toFixed(1)} V=${state.vibration}`, 'sh-dim');
