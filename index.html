@@ -850,89 +850,88 @@
                 </div>
             </div>
 
-        </div>
-    </div>
+            <!-- ========== FEEDBACK ========== -->
+            <div class="tab-panel scroll-panel" id="panel-feedback">
+                <div class="pad fb-wrap">
 
-    <!-- ========== FEEDBACK ========== -->
-    <div class="tab-panel scroll-panel" id="panel-feedback" onshown="loadFeedback()">
-        <div class="pad fb-wrap">
-
-            <!-- Stats row -->
-            <div class="fb-stats-row">
-                <div class="fb-stat">
-                    <div class="fb-stat-num" id="fbLikeCount">—</div>
-                    <div class="fb-stat-lbl">♥ TOTAL LIKES</div>
-                </div>
-                <div class="fb-stat">
-                    <div class="fb-stat-num" id="fbTotalCount">—</div>
-                    <div class="fb-stat-lbl">◈ REVIEWS</div>
-                </div>
-                <div class="fb-stat">
-                    <div class="fb-stat-num" id="fbAvgRating">—</div>
-                    <div class="fb-stat-lbl">★ AVG RATING</div>
-                </div>
-            </div>
-
-            <!-- Write feedback -->
-            <div class="fb-form">
-                <div class="fb-form-title">LEAVE FEEDBACK</div>
-                <div class="fb-field">
-                    <label class="fb-label">NAME (OPTIONAL)</label>
-                    <input class="fb-inp" id="fbName" placeholder="ANONYMOUS" maxlength="40">
-                </div>
-                <div class="fb-field">
-                    <label class="fb-label">RATING</label>
-                    <div class="fb-stars" id="fbStars">
-                        <span class="fb-star" data-v="1" onclick="setRating(1)">★</span>
-                        <span class="fb-star" data-v="2" onclick="setRating(2)">★</span>
-                        <span class="fb-star" data-v="3" onclick="setRating(3)">★</span>
-                        <span class="fb-star" data-v="4" onclick="setRating(4)">★</span>
-                        <span class="fb-star" data-v="5" onclick="setRating(5)">★</span>
+                    <!-- Stats row -->
+                    <div class="fb-stats-row">
+                        <div class="fb-stat">
+                            <div class="fb-stat-num" id="fbLikeCount">—</div>
+                            <div class="fb-stat-lbl">♥ TOTAL LIKES</div>
+                        </div>
+                        <div class="fb-stat">
+                            <div class="fb-stat-num" id="fbTotalCount">—</div>
+                            <div class="fb-stat-lbl">◈ REVIEWS</div>
+                        </div>
+                        <div class="fb-stat">
+                            <div class="fb-stat-num" id="fbAvgRating">—</div>
+                            <div class="fb-stat-lbl">★ AVG RATING</div>
+                        </div>
                     </div>
-                </div>
-                <div class="fb-field">
-                    <label class="fb-label">CATEGORY</label>
-                    <select class="fb-inp" id="fbCategory" style="max-width:200px;">
-                        <option value="general">GENERAL</option>
-                        <option value="bug">BUG REPORT</option>
-                        <option value="feature">FEATURE REQUEST</option>
-                        <option value="praise">PRAISE</option>
-                        <option value="question">QUESTION</option>
-                    </select>
-                </div>
-                <div class="fb-field">
-                    <label class="fb-label">MESSAGE</label>
-                    <textarea class="fb-inp" id="fbMessage" placeholder="Share your thoughts about VM-5..." maxlength="500"></textarea>
-                </div>
-                <div class="fb-submit-row">
-                    <button class="btn btn-orange" onclick="submitFeedback()">SUBMIT</button>
-                    <span id="fbSubmitMsg"></span>
-                    <span style="font-size:9px;color:var(--text3);margin-left:auto;">DEVICE: <span id="fbDeviceTag">—</span></span>
-                </div>
-            </div>
 
-            <!-- Filter bar -->
-            <div class="fb-filter">
-                <span class="fb-filter-lbl">FILTER</span>
-                <button class="fb-flt-btn active" onclick="filterFeedback('all', this)">ALL</button>
-                <button class="fb-flt-btn" onclick="filterFeedback('bug', this)">BUGS</button>
-                <button class="fb-flt-btn" onclick="filterFeedback('feature', this)">FEATURES</button>
-                <button class="fb-flt-btn" onclick="filterFeedback('praise', this)">PRAISE</button>
-                <button class="fb-flt-btn" onclick="filterFeedback('question', this)">QUESTIONS</button>
-                <button class="btn btn-sm" onclick="loadFeedback()" style="margin-left:auto;">↺ REFRESH</button>
-            </div>
+                    <!-- Write feedback -->
+                    <div class="fb-form">
+                        <div class="fb-form-title">LEAVE FEEDBACK</div>
+                        <div class="fb-field">
+                            <label class="fb-label">NAME (OPTIONAL)</label>
+                            <input class="fb-inp" id="fbName" placeholder="ANONYMOUS" maxlength="40">
+                        </div>
+                        <div class="fb-field">
+                            <label class="fb-label">RATING</label>
+                            <div class="fb-stars" id="fbStars">
+                                <span class="fb-star" data-v="1" onclick="setRating(1)">★</span>
+                                <span class="fb-star" data-v="2" onclick="setRating(2)">★</span>
+                                <span class="fb-star" data-v="3" onclick="setRating(3)">★</span>
+                                <span class="fb-star" data-v="4" onclick="setRating(4)">★</span>
+                                <span class="fb-star" data-v="5" onclick="setRating(5)">★</span>
+                            </div>
+                        </div>
+                        <div class="fb-field">
+                            <label class="fb-label">CATEGORY</label>
+                            <select class="fb-inp" id="fbCategory" style="max-width:200px;">
+                                <option value="general">GENERAL</option>
+                                <option value="bug">BUG REPORT</option>
+                                <option value="feature">FEATURE REQUEST</option>
+                                <option value="praise">PRAISE</option>
+                                <option value="question">QUESTION</option>
+                            </select>
+                        </div>
+                        <div class="fb-field">
+                            <label class="fb-label">MESSAGE</label>
+                            <textarea class="fb-inp" id="fbMessage" placeholder="Share your thoughts about VM-5..." maxlength="500"></textarea>
+                        </div>
+                        <div class="fb-submit-row">
+                            <button class="btn btn-orange" onclick="submitFeedback()">SUBMIT</button>
+                            <span id="fbSubmitMsg"></span>
+                            <span style="font-size:9px;color:var(--text3);margin-left:auto;">DEVICE: <span id="fbDeviceTag">—</span></span>
+                        </div>
+                    </div>
 
-            <!-- Feed -->
-            <div class="fb-list" id="fbList">
-                <div class="fb-empty">LOADING FEEDBACK...</div>
+                    <!-- Filter bar -->
+                    <div class="fb-filter">
+                        <span class="fb-filter-lbl">FILTER</span>
+                        <button class="fb-flt-btn active" onclick="filterFeedback('all', this)">ALL</button>
+                        <button class="fb-flt-btn" onclick="filterFeedback('bug', this)">BUGS</button>
+                        <button class="fb-flt-btn" onclick="filterFeedback('feature', this)">FEATURES</button>
+                        <button class="fb-flt-btn" onclick="filterFeedback('praise', this)">PRAISE</button>
+                        <button class="fb-flt-btn" onclick="filterFeedback('question', this)">QUESTIONS</button>
+                        <button class="btn btn-sm" onclick="loadFeedback()" style="margin-left:auto;">↺ REFRESH</button>
+                    </div>
+
+                    <!-- Feed -->
+                    <div class="fb-list" id="fbList">
+                        <div class="fb-empty">LOADING FEEDBACK...</div>
+                    </div>
+                    <div class="fb-load" id="fbLoad" style="display:none;">LOADING...</div>
+
+                </div>
             </div>
-            <div class="fb-load" id="fbLoad" style="display:none;">LOADING...</div>
 
         </div>
     </div>
 
-        </div>
-    </div>
+    <script>
     // ================================================================
     // CONSTANTS & STATE
     // ================================================================
