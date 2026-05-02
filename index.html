@@ -53,6 +53,35 @@
             transition: background 0.25s, color 0.25s;
         }
 
+        /* ─── MOBILE DEVICE OVERRIDES ─── */
+        body.device-phone { font-size: 13px; }
+        body.device-phone .sb-brand { font-size: 9px; letter-spacing: 0.08em; }
+        body.device-phone #statusBar { padding: 0 8px; gap: 6px; }
+        body.device-phone .tab-btn { padding: 10px 12px; font-size: 9px; letter-spacing: 0.08em; }
+        body.device-phone .sc-val { font-size: 28px; }
+        body.device-phone .sensor-pair { grid-template-columns: 1fr 1fr; }
+        body.device-phone .live-grid { grid-template-columns: 1fr; }
+        body.device-phone .pad { padding: 10px; }
+        body.device-phone .card { padding: 12px; }
+        body.device-phone .feat-grid { grid-template-columns: 1fr 1fr; }
+        body.device-phone .contact-grid { grid-template-columns: 1fr; gap: 20px; }
+        body.device-phone .intro-h1 { font-size: 32px; }
+        body.device-phone #aiInput { font-size: 14px; } /* prevent iOS zoom */
+        body.device-phone #shellInput { font-size: 14px; }
+        body.device-phone .inp { font-size: 14px; } /* prevent iOS zoom on focus */
+        body.device-phone .pills { gap: 4px; }
+        body.device-phone .pill { padding: 6px 10px; font-size: 9px; }
+        body.device-phone .ai-msg { font-size: 12px; }
+        body.device-phone .graph-panel canvas { touch-action: pan-y; }
+        /* Phone: hide some status bar items to save space */
+        body.device-phone #sysBadge,
+        body.device-phone #killBadge { display: none; }
+        body.device-phone .sb-right { gap: 6px; }
+
+        /* Tablet: middle ground */
+        body.device-tablet .live-grid { grid-template-columns: 240px 1fr; }
+        body.device-tablet .pad { padding: 12px; }
+
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: var(--border2); }
 
@@ -365,6 +394,82 @@
         /* Alert overlay */
         #alertOverlay { display: none; position: fixed; inset: 0; pointer-events: none; z-index: 150; animation: flashOv 0.6s infinite; }
         @keyframes flashOv { 50% { background: rgba(255, 0, 64, 0.05); } }
+
+        /* ─── LIKE BUTTON (status bar) ─── */
+        #likeBtn {
+            display: flex; align-items: center; gap: 5px;
+            background: transparent; border: 1px solid var(--border2);
+            color: var(--text3); font-family: inherit; font-size: 9px;
+            padding: 2px 8px; cursor: pointer; letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        #likeBtn:hover { border-color: var(--red); color: var(--red); }
+        #likeBtn.liked { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+        #likeBtn .lheart { font-size: 10px; transition: transform 0.15s; }
+        #likeBtn.liked .lheart { animation: heartPop 0.3s ease; }
+        @keyframes heartPop { 0%{transform:scale(1)} 50%{transform:scale(1.5)} 100%{transform:scale(1)} }
+
+        /* ─── FEEDBACK TAB ─── */
+        .fb-wrap { max-width: 760px; margin: 0 auto; }
+
+        .fb-stats-row {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;
+        }
+        .fb-stat {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 14px 16px; text-align: center;
+            transition: background 0.25s, border-color 0.25s;
+        }
+        .fb-stat-num {
+            font-family: 'Space Grotesk', sans-serif; font-size: 32px;
+            font-weight: 300; color: var(--orange); line-height: 1;
+            margin-bottom: 4px;
+        }
+        .fb-stat-lbl { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); }
+
+        /* Write form */
+        .fb-form { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+        .fb-form-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+        .fb-field { margin-bottom: 10px; }
+        .fb-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; display: block; }
+        .fb-inp { width: 100%; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); padding: 8px 12px; font-family: inherit; font-size: 11px; outline: none; transition: border-color 0.2s, background 0.25s, color 0.25s; }
+        .fb-inp:focus { border-color: var(--orange); }
+        textarea.fb-inp { resize: vertical; min-height: 80px; }
+        .fb-stars { display: flex; gap: 6px; margin-bottom: 10px; }
+        .fb-star { font-size: 20px; cursor: pointer; opacity: 0.3; transition: opacity 0.15s, transform 0.1s; user-select: none; }
+        .fb-star.active { opacity: 1; }
+        .fb-star:hover { transform: scale(1.2); }
+        .fb-submit-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        #fbSubmitMsg { font-size: 10px; color: var(--green); }
+
+        /* Filter bar */
+        .fb-filter { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        .fb-filter-lbl { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-right: 4px; }
+        .fb-flt-btn { padding: 3px 10px; border: 1px solid var(--border2); background: transparent; color: var(--text3); font-family: inherit; font-size: 9px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.05em; }
+        .fb-flt-btn:hover, .fb-flt-btn.active { border-color: var(--orange); color: var(--orange); }
+
+        /* Feedback cards */
+        .fb-list { display: flex; flex-direction: column; gap: 8px; }
+        .fb-card {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 14px 16px; position: relative;
+            transition: background 0.25s, border-color 0.25s;
+        }
+        .fb-card-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
+        .fb-card-meta { display: flex; flex-direction: column; gap: 2px; }
+        .fb-card-name { font-size: 11px; font-weight: 500; color: var(--text); }
+        .fb-card-device { font-size: 9px; color: var(--text3); letter-spacing: 0.05em; }
+        .fb-card-time { font-size: 9px; color: var(--text3); flex-shrink: 0; }
+        .fb-card-stars { font-size: 12px; margin-bottom: 6px; }
+        .fb-card-body { font-size: 11px; color: var(--text2); line-height: 1.6; }
+        .fb-card-tag { display: inline-block; padding: 2px 8px; border: 1px solid var(--border2); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-top: 8px; }
+        .fb-empty { text-align: center; padding: 40px 20px; font-size: 10px; color: var(--text3); letter-spacing: 0.1em; }
+        .fb-load { text-align: center; padding: 12px; font-size: 9px; color: var(--text3); letter-spacing: 0.1em; }
+
+        /* Like pulse on fb cards */
+        .fb-card-like { background: transparent; border: 1px solid var(--border2); color: var(--text3); font-family: inherit; font-size: 9px; padding: 2px 8px; cursor: pointer; transition: all 0.15s; }
+        .fb-card-like:hover { border-color: var(--red); color: var(--red); }
+        .fb-card-like.voted { border-color: var(--red); color: var(--red); background: var(--red-dim); }
     </style>
 <base target="_blank">
 </head>
@@ -377,12 +482,19 @@
             <span class="sb-brand">VM-5 // VOLCANO MONITOR</span>
             <span class="live-dot" id="liveDot"></span>
             <span id="liveLabel" style="color:var(--text3);font-size:9px;letter-spacing:0.1em;">STANDBY</span>
+            <span id="deviceBadge" class="badge" style="border-color:var(--blue);color:var(--blue);">💻 LAPTOP</span>
         </div>
         <div class="sb-right">
             <span class="badge" id="sysBadge">SYS: OFF</span>
             <span class="badge" id="killBadge">KILL: OFF</span>
             <span id="alertBadge"></span>
             <span id="alarmBadge">🔔 ALARM</span>
+            <button id="likeBtn" onclick="toggleLike()" title="Like this project">
+                <span class="lheart">♥</span>
+                <span id="likeCount">—</span>
+            </button>
+            <span id="visitEl" style="color:var(--text3);font-size:9px;letter-spacing:0.06em;" title="Total visits"></span>
+            <span style="color:var(--text3);font-size:9px;letter-spacing:0.06em;">© 2026</span>
             <span id="clockEl"></span>
         </div>
     </div>
@@ -394,6 +506,7 @@
             <button class="tab-btn" onclick="switchTab('settings')">◈ CONFIG</button>
             <button class="tab-btn" onclick="switchTab('shell')">› TERM</button>
             <button class="tab-btn" onclick="switchTab('ai')">◉ AI</button>
+            <button class="tab-btn" onclick="switchTab('feedback')">♥ FEEDBACK</button>
         </div>
 
         <div id="tabContent">
@@ -578,13 +691,7 @@
 
                     <div class="card">
                         <div class="card-title">SARVAM AI</div>
-                        <div class="sg-row">
-                            <span class="sg-label">API KEY</span>
-                            <div class="key-wrap">
-                                <input type="password" class="inp inp-wide" id="apiKeyInput" placeholder="sk_...">
-                                <button class="key-eye" onclick="toggleKeyVis()">◉</button>
-                            </div>
-                        </div>
+                        <input type="hidden" id="apiKeyInput">
                         <div class="sg-row">
                             <span class="sg-label">MODEL</span>
                             <select class="inp" id="modelSelect">
@@ -640,7 +747,11 @@
                 <div class="ai-inner">
                     <div class="ai-hdr">
                         <span class="ai-title">◉ SARVAM AI CONTROL</span>
-                        <div style="display:flex;gap:6px">
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <div class="key-wrap">
+                                <input type="password" class="inp" id="aiKeyInline" placeholder="PASTE API KEY..." style="width:180px;font-size:10px;padding:4px 28px 4px 8px;" oninput="syncApiKey(this.value)">
+                                <button class="key-eye" onclick="toggleAIKeyVis()" style="font-size:10px;">◉</button>
+                            </div>
                             <button class="btn btn-sm" onclick="newAISession()">NEW</button>
                             <button class="btn btn-sm" onclick="clearAIChat()">CLEAR</button>
                         </div>
@@ -734,7 +845,7 @@
                         <span>·</span>
                         <span>VM-5</span>
                         <span>·</span>
-                        <span>Open Source License</span>
+                        <span>MIT LICENSE</span>
                     </div>
                 </div>
             </div>
@@ -742,12 +853,103 @@
         </div>
     </div>
 
-    <script>
+    <!-- ========== FEEDBACK ========== -->
+    <div class="tab-panel scroll-panel" id="panel-feedback" onshown="loadFeedback()">
+        <div class="pad fb-wrap">
+
+            <!-- Stats row -->
+            <div class="fb-stats-row">
+                <div class="fb-stat">
+                    <div class="fb-stat-num" id="fbLikeCount">—</div>
+                    <div class="fb-stat-lbl">♥ TOTAL LIKES</div>
+                </div>
+                <div class="fb-stat">
+                    <div class="fb-stat-num" id="fbTotalCount">—</div>
+                    <div class="fb-stat-lbl">◈ REVIEWS</div>
+                </div>
+                <div class="fb-stat">
+                    <div class="fb-stat-num" id="fbAvgRating">—</div>
+                    <div class="fb-stat-lbl">★ AVG RATING</div>
+                </div>
+            </div>
+
+            <!-- Write feedback -->
+            <div class="fb-form">
+                <div class="fb-form-title">LEAVE FEEDBACK</div>
+                <div class="fb-field">
+                    <label class="fb-label">NAME (OPTIONAL)</label>
+                    <input class="fb-inp" id="fbName" placeholder="ANONYMOUS" maxlength="40">
+                </div>
+                <div class="fb-field">
+                    <label class="fb-label">RATING</label>
+                    <div class="fb-stars" id="fbStars">
+                        <span class="fb-star" data-v="1" onclick="setRating(1)">★</span>
+                        <span class="fb-star" data-v="2" onclick="setRating(2)">★</span>
+                        <span class="fb-star" data-v="3" onclick="setRating(3)">★</span>
+                        <span class="fb-star" data-v="4" onclick="setRating(4)">★</span>
+                        <span class="fb-star" data-v="5" onclick="setRating(5)">★</span>
+                    </div>
+                </div>
+                <div class="fb-field">
+                    <label class="fb-label">CATEGORY</label>
+                    <select class="fb-inp" id="fbCategory" style="max-width:200px;">
+                        <option value="general">GENERAL</option>
+                        <option value="bug">BUG REPORT</option>
+                        <option value="feature">FEATURE REQUEST</option>
+                        <option value="praise">PRAISE</option>
+                        <option value="question">QUESTION</option>
+                    </select>
+                </div>
+                <div class="fb-field">
+                    <label class="fb-label">MESSAGE</label>
+                    <textarea class="fb-inp" id="fbMessage" placeholder="Share your thoughts about VM-5..." maxlength="500"></textarea>
+                </div>
+                <div class="fb-submit-row">
+                    <button class="btn btn-orange" onclick="submitFeedback()">SUBMIT</button>
+                    <span id="fbSubmitMsg"></span>
+                    <span style="font-size:9px;color:var(--text3);margin-left:auto;">DEVICE: <span id="fbDeviceTag">—</span></span>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="fb-filter">
+                <span class="fb-filter-lbl">FILTER</span>
+                <button class="fb-flt-btn active" onclick="filterFeedback('all', this)">ALL</button>
+                <button class="fb-flt-btn" onclick="filterFeedback('bug', this)">BUGS</button>
+                <button class="fb-flt-btn" onclick="filterFeedback('feature', this)">FEATURES</button>
+                <button class="fb-flt-btn" onclick="filterFeedback('praise', this)">PRAISE</button>
+                <button class="fb-flt-btn" onclick="filterFeedback('question', this)">QUESTIONS</button>
+                <button class="btn btn-sm" onclick="loadFeedback()" style="margin-left:auto;">↺ REFRESH</button>
+            </div>
+
+            <!-- Feed -->
+            <div class="fb-list" id="fbList">
+                <div class="fb-empty">LOADING FEEDBACK...</div>
+            </div>
+            <div class="fb-load" id="fbLoad" style="display:none;">LOADING...</div>
+
+        </div>
+    </div>
+
+        </div>
+    </div>
     // ================================================================
     // CONSTANTS & STATE
     // ================================================================
     const API_URL = 'https://volcano-monitor-sandy.vercel.app/api/volcano';
     const STORAGE_KEY = 'volc5_v2';
+
+    // ── DEVICE DETECTION ──
+    const DEVICE = (() => {
+        const ua = navigator.userAgent;
+        const w  = window.innerWidth;
+        const touch = navigator.maxTouchPoints > 1;
+        const isPhone  = /Android|iPhone|iPod/i.test(ua) || (touch && w < 600);
+        const isTablet = !isPhone && (touch && w < 1024 || /iPad/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)));
+        if (isPhone)  return 'phone';
+        if (isTablet) return 'tablet';
+        return 'laptop';
+    })();
 
     const state = {
         // sensor current
@@ -758,24 +960,24 @@
         distAlert: false, vibAlert: false, dualAlert: false,
         // system
         systemActive: false, killMode: false,
-        // thresholds (saved)
+        // thresholds (saved locally + synced to DB)
         minUltrasonic: 100, minVibration: 50,
         // history buffers
         distHistory: Array(240).fill(null),
-        vibHistory: Array(240).fill(null),
+        vibHistory:  Array(240).fill(null),
         // logging
         csvLog: [], autoLog: true,
-        // AI
+        // AI — apiKey stored locally AND synced via DB settings field
         aiHistory: [], apiKey: '', aiModel: 'sarvam-105b',
         // theme
         theme: 'dark',
         // alarm settings (saved)
-        alarmEnabled: true,
-        alarmOnFlag: true,       // trigger on DB alert flag
-        alarmOnThresh: true,     // trigger on local threshold breach
-        alarmVolume: 60,         // 0-100
-        alarmMuted: false,       // session mute
-        alarmRinging: false,
+        alarmEnabled:  true,
+        alarmOnFlag:   true,
+        alarmOnThresh: true,
+        alarmVolume:   60,
+        alarmMuted:    false,
+        alarmRinging:  false,
     };
 
     let pollInterval = null, pollActive = false, pollCount = 0;
@@ -784,14 +986,20 @@
     let cmdLockUntil = 0;
     let ultraChart, vibChart;
     let shellHistory = [], shellHistoryIdx = -1;
+    let visitCount = 0;
+    let apiKeySyncPending = false; // true when we have a key to push to DB
 
     // ================================================================
     // INIT
     // ================================================================
     document.addEventListener('DOMContentLoaded', () => {
+        applyDeviceClass();
         loadSettings();
         initCharts();
         initShell();
+        initFeedback();
+        logVisit();
+        loadLikeCount();
         updateClock();
         setInterval(updateClock, 1000);
         setInterval(() => { document.getElementById('logStats').textContent = state.csvLog.length + ' ENTRIES'; }, 2000);
@@ -805,6 +1013,29 @@
         switchTabByName('intro');
         startPolling();
     });
+
+    // ── Device class + badge ──
+    function applyDeviceClass() {
+        document.body.classList.add('device-' + DEVICE);
+        const badge = document.getElementById('deviceBadge');
+        const icons = { phone: '📱 PHONE', tablet: '📐 TABLET', laptop: '💻 LAPTOP' };
+        badge.textContent = icons[DEVICE] || '💻 LAPTOP';
+        // On phones hide the badge to save bar space
+        if (DEVICE === 'phone') badge.style.display = 'none';
+    }
+
+    // ── Visit counter (persisted in localStorage, shown in status bar) ──
+    function logVisit() {
+        try {
+            visitCount = parseInt(localStorage.getItem('volc5_visits') || '0') + 1;
+            localStorage.setItem('volc5_visits', visitCount);
+        } catch(e) { visitCount = 1; }
+        updateVisitEl();
+    }
+    function updateVisitEl() {
+        const el = document.getElementById('visitEl');
+        if (el) el.textContent = `V#${visitCount}`;
+    }
 
     const ts = () => new Date().toTimeString().slice(0, 8);
     function updateClock() { document.getElementById('clockEl').textContent = new Date().toTimeString().slice(0, 8); }
@@ -891,6 +1122,21 @@
         const minU = parseFloat(d.min_ultra ?? d.minUltrasonic ?? d.min_ult ?? state.minUltrasonic);
         const minS = parseInt(d.min_vib ?? d.minVibration ?? state.minVibration);
 
+        // ── Cross-device API key sync from DB ──
+        const dbKey = d.api_key ?? d.apiKey ?? null;
+        if (dbKey && dbKey !== state.apiKey) {
+            state.apiKey = dbKey;
+            document.getElementById('apiKeyInput').value = dbKey;
+            document.getElementById('aiKeyInline').value = dbKey;
+            saveSettings();
+            addLog(`[${ts()}] 🔑 API KEY SYNCED FROM DB`, 'd');
+        }
+        // If we have a key the DB doesn't know about yet, push it
+        if (state.apiKey && !dbKey && !apiKeySyncPending) {
+            apiKeySyncPending = true;
+            pushApiKeyToDB(state.apiKey);
+        }
+
         if (isNaN(dist) || isNaN(vib)) return;
 
         // Save previous before updating
@@ -906,7 +1152,7 @@
             if (minU !== state.minUltrasonic || minS !== state.minVibration) {
                 state.minUltrasonic = minU; state.minVibration = minS;
                 updateThresholdUI();
-                saveSettings(); // persist updated thresholds from DB
+                saveSettings();
             }
         }
 
@@ -918,12 +1164,27 @@
         updateCharts();
         if (state.autoLog) pushLog();
 
-        // ── ALARM LOGIC ──
         evaluateAlarm(dA, sA, duA, dist, vib);
 
         const alert = dA || sA || duA;
         addLog(`[${ts()}] D=${dist.toFixed(1)} V=${vib} DA=${+dA} SA=${+sA} DU=${+duA} K=${+kill} S=${+sysOn}`, alert ? 'e' : '');
         document.getElementById('rawJson').textContent = JSON.stringify(d, null, 2);
+    }
+
+    // Push API key to DB so other devices can pick it up
+    async function pushApiKeyToDB(key) {
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: 'set_api_key', api_key: key })
+            });
+            addLog(`[${ts()}] 🔑 API KEY PUSHED TO DB`, 'd');
+        } catch(e) {
+            // silently fail — will retry next time
+        } finally {
+            apiKeySyncPending = false;
+        }
     }
 
     // ================================================================
@@ -1274,6 +1535,7 @@
         document.getElementById('ultraThreshInput').value = state.minUltrasonic;
         document.getElementById('vibThreshInput').value   = state.minVibration;
         document.getElementById('apiKeyInput').value      = state.apiKey;
+        document.getElementById('aiKeyInline').value      = state.apiKey;
         document.getElementById('modelSelect').value      = state.aiModel;
         document.getElementById('autoLogCheck').checked   = state.autoLog;
         document.getElementById('alarmEnabledCheck').checked  = state.alarmEnabled;
@@ -1304,6 +1566,8 @@
         state.apiKey  = document.getElementById('apiKeyInput').value.trim();
         state.aiModel = document.getElementById('modelSelect').value;
         saveSettings();
+        // Push to DB for cross-device sync
+        if (state.apiKey) pushApiKeyToDB(state.apiKey);
         const m = document.getElementById('aiSaveMsg');
         m.style.display = 'inline'; setTimeout(() => m.style.display = 'none', 2000);
     }
@@ -1328,6 +1592,15 @@
     function toggleKeyVis() {
         const i = document.getElementById('apiKeyInput');
         i.type = i.type === 'password' ? 'text' : 'password';
+    }
+    function toggleAIKeyVis() {
+        const i = document.getElementById('aiKeyInline');
+        i.type = i.type === 'password' ? 'text' : 'password';
+    }
+    function syncApiKey(val) {
+        state.apiKey = val.trim();
+        document.getElementById('apiKeyInput').value = state.apiKey;
+        saveSettings();
     }
 
     // ================================================================
@@ -1410,9 +1683,10 @@
 
     async function sendAIMessage(userMsg) {
         const key = state.apiKey || document.getElementById('apiKeyInput').value.trim();
-        if (!key) { aiSys('⚠ SET API KEY IN CONFIG.'); return; }
+        if (!key) { aiSys('⚠ ENTER YOUR SARVAM API KEY IN THE INPUT BELOW.'); return; }
         state.apiKey = key;
         saveSettings(); // persist key on use
+        if (!apiKeySyncPending) { apiKeySyncPending = true; pushApiKeyToDB(key); } // cross-device sync
         document.getElementById('aiInput').value = '';
         aiMsg('user', userMsg);
 
@@ -1466,11 +1740,250 @@ Be concise. Technical.`;
     // RESPONSIVE
     // ================================================================
     function handleResize() {
+        const w = window.innerWidth;
         const g = document.querySelector('.live-grid');
-        if (g) g.style.gridTemplateColumns = window.innerWidth < 760 ? '1fr' : '280px 1fr';
+        if (!g) return;
+        if (DEVICE === 'phone' || w < 600) {
+            g.style.gridTemplateColumns = '1fr';
+        } else if (DEVICE === 'tablet' || w < 900) {
+            g.style.gridTemplateColumns = '240px 1fr';
+        } else {
+            g.style.gridTemplateColumns = '280px 1fr';
+        }
     }
     window.addEventListener('resize', handleResize);
     handleResize();
+
+    // ================================================================
+    // FEEDBACK & LIKE SYSTEM
+    // ================================================================
+    // Uses your Vercel DB via POST { command: "feedback_*" } and GET returns feedback/likes array
+    // Falls back gracefully to localStorage if DB doesn't support it yet.
+    // ────────────────────────────────────────────────────────────────
+
+    const FB_KEY  = 'volc5_feedback';   // localStorage fallback
+    const LK_KEY  = 'volc5_likes';      // localStorage for like count cache
+    const LKD_KEY = 'volc5_liked';      // did THIS browser already like?
+
+    let fbAll        = [];   // all loaded feedback
+    let fbFilter     = 'all';
+    let fbRating     = 0;
+    let fbLiked      = false;
+    let fbLikeCount  = 0;
+
+    // ── Tab switch triggers load ──
+    const _origSwitch = switchTabByName;
+    window.switchTabByName = function(name) {
+        _origSwitch(name);
+        if (name === 'feedback') setTimeout(loadFeedback, 50);
+    };
+    // Also wire onclick tabs
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.tab-btn');
+        if (btn && (btn.getAttribute('onclick')||'').includes("'feedback'")) loadFeedback();
+    });
+
+    // ── INIT feedback UI ──
+    function initFeedback() {
+        fbLiked = localStorage.getItem(LKD_KEY) === '1';
+        fbLikeCount = parseInt(localStorage.getItem(LK_KEY) || '0');
+        document.getElementById('fbDeviceTag').textContent = DEVICE.toUpperCase();
+        updateLikeBtn();
+        loadFeedback();
+    }
+
+    // ── LIKE SYSTEM ──
+    async function toggleLike() {
+        if (fbLiked) {
+            // Unlike
+            fbLiked = false;
+            fbLikeCount = Math.max(0, fbLikeCount - 1);
+            localStorage.setItem(LKD_KEY, '0');
+        } else {
+            fbLiked = true;
+            fbLikeCount++;
+            localStorage.setItem(LKD_KEY, '1');
+        }
+        localStorage.setItem(LK_KEY, fbLikeCount);
+        updateLikeBtn();
+        // Try to sync to DB
+        try {
+            await fetch(API_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: fbLiked ? 'like_add' : 'like_remove' })
+            });
+        } catch(e) { /* DB not ready, local count still works */ }
+        // Refresh displayed count
+        loadLikeCount();
+    }
+
+    async function loadLikeCount() {
+        try {
+            const res = await fetch(API_URL, { cache: 'no-store', headers: { Accept: 'application/json' } });
+            if (res.ok) {
+                const j = await res.json();
+                const d = j.data || j;
+                const c = parseInt(d.like_count ?? d.likes ?? d.likeCount ?? fbLikeCount);
+                if (!isNaN(c)) { fbLikeCount = c; localStorage.setItem(LK_KEY, c); }
+            }
+        } catch(e) { /* use local */ }
+        updateLikeBtn();
+        const fbStatEl = document.getElementById('fbLikeCount');
+        if (fbStatEl) fbStatEl.textContent = fbLikeCount;
+    }
+
+    function updateLikeBtn() {
+        const btn = document.getElementById('likeBtn');
+        const cnt = document.getElementById('likeCount');
+        if (!btn) return;
+        btn.classList.toggle('liked', fbLiked);
+        cnt.textContent = fbLikeCount || 0;
+    }
+
+    // ── FEEDBACK STAR RATING ──
+    function setRating(v) {
+        fbRating = v;
+        document.querySelectorAll('.fb-star').forEach((s, i) => {
+            s.classList.toggle('active', i < v);
+        });
+    }
+
+    // ── SUBMIT FEEDBACK ──
+    async function submitFeedback() {
+        const msg = document.getElementById('fbMessage').value.trim();
+        if (!msg) { showFbMsg('⚠ MESSAGE REQUIRED', true); return; }
+        if (fbRating === 0) { showFbMsg('⚠ SELECT A RATING', true); return; }
+
+        const entry = {
+            id:       Date.now(),
+            name:     document.getElementById('fbName').value.trim() || 'ANONYMOUS',
+            rating:   fbRating,
+            category: document.getElementById('fbCategory').value,
+            message:  msg,
+            device:   DEVICE.toUpperCase(),
+            ts:       new Date().toISOString(),
+        };
+
+        // Try DB first
+        let savedToDb = false;
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: 'feedback_add', feedback: entry })
+            });
+            if (res.ok) savedToDb = true;
+        } catch(e) {}
+
+        // Always save to localStorage as fallback/cache
+        try {
+            const arr = JSON.parse(localStorage.getItem(FB_KEY) || '[]');
+            arr.unshift(entry);
+            if (arr.length > 200) arr.length = 200;
+            localStorage.setItem(FB_KEY, JSON.stringify(arr));
+        } catch(e) {}
+
+        // Clear form
+        document.getElementById('fbMessage').value = '';
+        document.getElementById('fbName').value = '';
+        setRating(0);
+        document.getElementById('fbCategory').value = 'general';
+
+        showFbMsg(savedToDb ? '✔ SUBMITTED TO DB' : '✔ SAVED LOCALLY', false);
+        loadFeedback();
+    }
+
+    function showFbMsg(txt, isErr) {
+        const el = document.getElementById('fbSubmitMsg');
+        el.textContent = txt;
+        el.style.color = isErr ? 'var(--red)' : 'var(--green)';
+        setTimeout(() => el.textContent = '', 3000);
+    }
+
+    // ── LOAD FEEDBACK (DB first, localStorage fallback) ──
+    async function loadFeedback() {
+        document.getElementById('fbLoad').style.display = 'block';
+        let entries = [];
+
+        // Try DB
+        try {
+            const res = await fetch(API_URL + '?action=feedback', { cache: 'no-store', headers: { Accept: 'application/json' } });
+            if (res.ok) {
+                const j = await res.json();
+                const d = j.data || j;
+                if (Array.isArray(d.feedback)) {
+                    entries = d.feedback;
+                    // Also update like count from same response
+                    const lc = parseInt(d.like_count ?? d.likes ?? d.likeCount ?? NaN);
+                    if (!isNaN(lc)) { fbLikeCount = lc; localStorage.setItem(LK_KEY, lc); updateLikeBtn(); }
+                }
+            }
+        } catch(e) {}
+
+        // Merge with localStorage (dedup by id)
+        try {
+            const local = JSON.parse(localStorage.getItem(FB_KEY) || '[]');
+            const ids = new Set(entries.map(e => e.id));
+            local.forEach(e => { if (!ids.has(e.id)) entries.push(e); });
+        } catch(e) {}
+
+        // Sort newest first
+        entries.sort((a, b) => (b.id || 0) - (a.id || 0));
+        fbAll = entries;
+        renderFeedback();
+        updateFbStats();
+        document.getElementById('fbLoad').style.display = 'none';
+    }
+
+    function filterFeedback(cat, btn) {
+        fbFilter = cat;
+        document.querySelectorAll('.fb-flt-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderFeedback();
+    }
+
+    function renderFeedback() {
+        const list = document.getElementById('fbList');
+        const items = fbFilter === 'all' ? fbAll : fbAll.filter(e => e.category === fbFilter);
+        if (!items.length) {
+            list.innerHTML = '<div class="fb-empty">NO FEEDBACK YET — BE THE FIRST ↑</div>';
+            return;
+        }
+        list.innerHTML = '';
+        items.forEach(e => {
+            const card = document.createElement('div');
+            card.className = 'fb-card';
+            const stars = '★'.repeat(e.rating || 0) + '☆'.repeat(5 - (e.rating || 0));
+            const dt = e.ts ? new Date(e.ts).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+            card.innerHTML = `
+                <div class="fb-card-hdr">
+                    <div class="fb-card-meta">
+                        <div class="fb-card-name">${esc(e.name || 'ANONYMOUS')}</div>
+                        <div class="fb-card-device">◈ ${e.device || 'UNKNOWN'}</div>
+                    </div>
+                    <span class="fb-card-time">${dt}</span>
+                </div>
+                <div class="fb-card-stars" style="color:var(--orange)">${stars}</div>
+                <div class="fb-card-body">${esc(e.message || '')}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                    <span class="fb-card-tag">${(e.category||'general').toUpperCase()}</span>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function updateFbStats() {
+        document.getElementById('fbLikeCount').textContent = fbLikeCount || 0;
+        document.getElementById('fbTotalCount').textContent = fbAll.length;
+        const rated = fbAll.filter(e => e.rating > 0);
+        const avg = rated.length ? (rated.reduce((s,e) => s + e.rating, 0) / rated.length).toFixed(1) : '—';
+        document.getElementById('fbAvgRating').textContent = avg;
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     </script>
 </body>
 </html>
